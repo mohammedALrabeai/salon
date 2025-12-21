@@ -1,0 +1,51 @@
+<?php
+
+return [
+    'navigation' => 'الإدخالات اليومية',
+    'navigation_group' => 'العمليات',
+    'model' => [
+        'singular' => 'إدخال يومي',
+        'plural' => 'الإدخالات اليومية',
+    ],
+    'sections' => [
+        'assignment' => 'التعيين',
+        'financial' => 'الملخص المالي',
+        'commission' => 'العمولة',
+        'bonus' => 'المكافآت والملاحظات',
+        'lock' => 'إغلاق اليوم',
+        'metadata' => 'بيانات النظام',
+    ],
+    'fields' => [
+        'branch_id' => 'الفرع',
+        'employee_id' => 'الموظف',
+        'date' => 'التاريخ',
+        'source' => 'المصدر',
+        'sales' => 'إجمالي المبيعات',
+        'cash' => 'المبلغ المستلم نقداً',
+        'expense' => 'المصروفات',
+        'net' => 'الصافي',
+        'commission' => 'العمولة',
+        'commission_rate' => 'نسبة العمولة',
+        'bonus' => 'المكافأة',
+        'bonus_reason' => 'سبب المكافأة',
+        'note' => 'ملاحظات',
+        'transactions_count' => 'عدد العمليات',
+        'is_locked' => 'مغلق',
+        'locked_at' => 'تاريخ الإغلاق',
+        'locked_by' => 'أُغلق بواسطة',
+        'created_at' => 'تاريخ الإنشاء',
+        'updated_at' => 'تاريخ التحديث',
+        'deleted_at' => 'تاريخ الحذف',
+        'created_by' => 'أُنشئ بواسطة',
+        'updated_by' => 'عُدّل بواسطة',
+    ],
+    'source' => [
+        'web' => 'ويب',
+        'mobile' => 'جوال',
+        'api' => 'واجهة برمجة',
+    ],
+    'locked' => [
+        'yes' => 'مغلق',
+        'no' => 'مفتوح',
+    ],
+];

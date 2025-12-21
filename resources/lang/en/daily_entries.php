@@ -1,0 +1,51 @@
+<?php
+
+return [
+    'navigation' => 'Daily Entries',
+    'navigation_group' => 'Operations',
+    'model' => [
+        'singular' => 'Daily Entry',
+        'plural' => 'Daily Entries',
+    ],
+    'sections' => [
+        'assignment' => 'Assignment',
+        'financial' => 'Financial Summary',
+        'commission' => 'Commission',
+        'bonus' => 'Bonus & Notes',
+        'lock' => 'Locking',
+        'metadata' => 'System Metadata',
+    ],
+    'fields' => [
+        'branch_id' => 'Branch',
+        'employee_id' => 'Employee',
+        'date' => 'Date',
+        'source' => 'Source',
+        'sales' => 'Sales',
+        'cash' => 'Cash Collected',
+        'expense' => 'Expenses',
+        'net' => 'Net',
+        'commission' => 'Commission',
+        'commission_rate' => 'Commission Rate',
+        'bonus' => 'Bonus',
+        'bonus_reason' => 'Bonus Reason',
+        'note' => 'Notes',
+        'transactions_count' => 'Transactions Count',
+        'is_locked' => 'Locked',
+        'locked_at' => 'Locked At',
+        'locked_by' => 'Locked By',
+        'created_at' => 'Created At',
+        'updated_at' => 'Updated At',
+        'deleted_at' => 'Deleted At',
+        'created_by' => 'Created By',
+        'updated_by' => 'Updated By',
+    ],
+    'source' => [
+        'web' => 'Web',
+        'mobile' => 'Mobile',
+        'api' => 'API',
+    ],
+    'locked' => [
+        'yes' => 'Locked',
+        'no' => 'Open',
+    ],
+];
