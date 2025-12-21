@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Concerns\LogsModelActivity;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,11 +11,38 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, HasUuids, Notifiable, SoftDeletes;
+    use HasFactory, HasRoles, HasUuids, LogsModelActivity, Notifiable, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(function (User $user): void {
+            if (! $user->role) {
+                return;
+            }
+
+            if (! Schema::hasTable(config('permission.table_names.roles'))) {
+                return;
+            }
+
+            $roleName = $user->role;
+
+            if (! Role::query()->where('name', $roleName)->exists()) {
+                return;
+            }
+
+            if (! $user->roles->contains('name', $roleName)) {
+                $user->syncRoles([$roleName]);
+            }
+        });
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -64,6 +92,18 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'locked_until' => 'datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return $this->baseActivitylogOptions()
+            ->logExcept([
+                'password_hash',
+                'last_login_at',
+                'last_login_ip',
+                'failed_login_count',
+                'locked_until',
+            ]);
     }
 
     public function branch(): BelongsTo

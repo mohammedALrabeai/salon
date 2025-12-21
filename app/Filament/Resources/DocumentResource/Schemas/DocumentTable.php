@@ -23,6 +23,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class DocumentTable
 {
@@ -99,7 +100,20 @@ class DocumentTable
                     ->options(self::ownerTypeOptions()),
                 SelectFilter::make('status')
                     ->label(__('documents.fields.status'))
-                    ->options(self::statusOptions()),
+                    ->options(self::statusOptions())
+                    ->query(function (Builder $query, array $data): Builder {
+                        $status = $data['value'] ?? null;
+
+                        if (! filled($status)) {
+                            return $query;
+                        }
+
+                        if (! self::isSqlite()) {
+                            return $query->where('status', $status);
+                        }
+
+                        return $query->whereRaw(self::sqliteStatusExpression() . ' = ?', [$status]);
+                    }),
                 Filter::make('expiry_date')
                     ->form([
                         DatePicker::make('from')
@@ -233,5 +247,15 @@ class DocumentTable
         }
 
         $record->update($payload);
+    }
+
+    private static function isSqlite(): bool
+    {
+        return DB::connection()->getDriverName() === 'sqlite';
+    }
+
+    private static function sqliteStatusExpression(): string
+    {
+        return "CASE WHEN expiry_date IS NULL THEN 'safe' WHEN date(expiry_date) < date('now') THEN 'expired' WHEN date(expiry_date) <= date('now', '+15 days') THEN 'urgent' WHEN date(expiry_date) <= date('now', '+60 days') THEN 'near' ELSE 'safe' END";
     }
 }
