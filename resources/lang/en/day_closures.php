@@ -32,4 +32,9 @@ return [
         'created_at' => 'Created At',
         'computed_net' => 'Computed Net',
     ],
+    'actions' => [
+        'sync_totals' => 'Sync Totals',
+        'lock_entries' => 'Lock Daily Entries',
+        'unlock_entries' => 'Unlock Daily Entries',
+    ],
 ];

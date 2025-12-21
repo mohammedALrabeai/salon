@@ -58,5 +58,8 @@ return [
     ],
     'actions' => [
         'add_setting' => 'إضافة إعداد',
+        'activate' => 'تفعيل',
+        'deactivate' => 'تعطيل',
+        'set_maintenance' => 'وضع الصيانة',
     ],
 ];

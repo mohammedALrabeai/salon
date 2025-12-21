@@ -48,4 +48,8 @@ return [
         'yes' => 'Locked',
         'no' => 'Open',
     ],
+    'actions' => [
+        'lock' => 'Lock Entry',
+        'unlock' => 'Unlock Entry',
+    ],
 ];

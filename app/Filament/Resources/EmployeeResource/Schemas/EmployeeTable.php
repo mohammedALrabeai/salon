@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\EmployeeResource\Schemas;
 
+use App\Models\Employee;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -11,6 +13,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -103,6 +106,34 @@ class EmployeeTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                Action::make('activate')
+                    ->label(__('employees.actions.activate'))
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->color('success')
+                    ->visible(fn (Employee $record): bool => $record->status !== 'active')
+                    ->requiresConfirmation()
+                    ->action(fn (Employee $record) => self::updateStatus($record, 'active')),
+                Action::make('on_leave')
+                    ->label(__('employees.actions.mark_on_leave'))
+                    ->icon(Heroicon::OutlinedClock)
+                    ->color('warning')
+                    ->visible(fn (Employee $record): bool => $record->status !== 'on_leave')
+                    ->requiresConfirmation()
+                    ->action(fn (Employee $record) => self::updateStatus($record, 'on_leave')),
+                Action::make('suspend')
+                    ->label(__('employees.actions.suspend'))
+                    ->icon(Heroicon::OutlinedNoSymbol)
+                    ->color('gray')
+                    ->visible(fn (Employee $record): bool => $record->status !== 'suspended')
+                    ->requiresConfirmation()
+                    ->action(fn (Employee $record) => self::updateStatus($record, 'suspended')),
+                Action::make('deactivate')
+                    ->label(__('employees.actions.deactivate'))
+                    ->icon(Heroicon::OutlinedPauseCircle)
+                    ->color('gray')
+                    ->visible(fn (Employee $record): bool => $record->status !== 'inactive')
+                    ->requiresConfirmation()
+                    ->action(fn (Employee $record) => self::updateStatus($record, 'inactive')),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
@@ -143,6 +174,17 @@ class EmployeeTable
             'on_leave' => __('employees.status.on_leave'),
             'suspended' => __('employees.status.suspended'),
         ];
+    }
+
+    private static function updateStatus(Employee $record, string $status): void
+    {
+        $payload = ['status' => $status];
+
+        if ($userId = auth()->id()) {
+            $payload['updated_by'] = $userId;
+        }
+
+        $record->update($payload);
     }
 
     /**

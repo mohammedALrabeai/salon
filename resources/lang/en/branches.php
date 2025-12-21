@@ -58,5 +58,8 @@ return [
     ],
     'actions' => [
         'add_setting' => 'Add setting',
+        'activate' => 'Activate',
+        'deactivate' => 'Deactivate',
+        'set_maintenance' => 'Set maintenance',
     ],
 ];

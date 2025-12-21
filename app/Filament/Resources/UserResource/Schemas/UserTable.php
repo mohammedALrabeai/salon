@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\UserResource\Schemas;
 
+use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -11,6 +13,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -85,6 +88,27 @@ class UserTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                Action::make('activate')
+                    ->label(__('users.actions.activate'))
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->color('success')
+                    ->visible(fn (User $record): bool => $record->status !== 'active')
+                    ->requiresConfirmation()
+                    ->action(fn (User $record) => self::updateStatus($record, 'active')),
+                Action::make('suspend')
+                    ->label(__('users.actions.suspend'))
+                    ->icon(Heroicon::OutlinedNoSymbol)
+                    ->color('warning')
+                    ->visible(fn (User $record): bool => $record->status !== 'suspended')
+                    ->requiresConfirmation()
+                    ->action(fn (User $record) => self::updateStatus($record, 'suspended')),
+                Action::make('deactivate')
+                    ->label(__('users.actions.deactivate'))
+                    ->icon(Heroicon::OutlinedPauseCircle)
+                    ->color('gray')
+                    ->visible(fn (User $record): bool => $record->status !== 'inactive')
+                    ->requiresConfirmation()
+                    ->action(fn (User $record) => self::updateStatus($record, 'inactive')),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
@@ -128,6 +152,17 @@ class UserTable
             'inactive' => __('users.status.inactive'),
             'suspended' => __('users.status.suspended'),
         ];
+    }
+
+    private static function updateStatus(User $record, string $status): void
+    {
+        $payload = ['status' => $status];
+
+        if ($userId = auth()->id()) {
+            $payload['updated_by'] = $userId;
+        }
+
+        $record->update($payload);
     }
 
     private static function roleLabel(?string $state): string

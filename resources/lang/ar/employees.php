@@ -62,4 +62,10 @@ return [
         'fixed' => 'مبلغ ثابت',
         'tiered' => 'شرائح',
     ],
+    'actions' => [
+        'activate' => 'تفعيل',
+        'deactivate' => 'تعطيل',
+        'mark_on_leave' => 'إجازة',
+        'suspend' => 'إيقاف',
+    ],
 ];

@@ -62,4 +62,10 @@ return [
         'fixed' => 'Fixed',
         'tiered' => 'Tiered',
     ],
+    'actions' => [
+        'activate' => 'Activate',
+        'deactivate' => 'Deactivate',
+        'mark_on_leave' => 'Mark On Leave',
+        'suspend' => 'Suspend',
+    ],
 ];

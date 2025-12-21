@@ -57,5 +57,8 @@ return [
     'actions' => [
         'add_setting' => 'Add setting',
         'add_preference' => 'Add preference',
+        'activate' => 'Activate',
+        'deactivate' => 'Deactivate',
+        'suspend' => 'Suspend',
     ],
 ];

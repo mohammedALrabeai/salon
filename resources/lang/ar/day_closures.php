@@ -32,4 +32,9 @@ return [
         'created_at' => 'تاريخ الإنشاء',
         'computed_net' => 'الصافي المحسوب',
     ],
+    'actions' => [
+        'sync_totals' => 'مزامنة الإجماليات',
+        'lock_entries' => 'قفل الإدخالات',
+        'unlock_entries' => 'فتح الإدخالات',
+    ],
 ];

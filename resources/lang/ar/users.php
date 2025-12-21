@@ -57,5 +57,8 @@ return [
     'actions' => [
         'add_setting' => 'إضافة إعداد',
         'add_preference' => 'إضافة تفضيل',
+        'activate' => 'تفعيل',
+        'deactivate' => 'تعطيل',
+        'suspend' => 'إيقاف',
     ],
 ];

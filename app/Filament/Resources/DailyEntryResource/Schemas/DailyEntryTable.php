@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\DailyEntryResource\Schemas;
 
+use App\Models\DailyEntry;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -11,6 +13,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -113,6 +116,20 @@ class DailyEntryTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                Action::make('lock')
+                    ->label(__('daily_entries.actions.lock'))
+                    ->icon(Heroicon::OutlinedLockClosed)
+                    ->color('success')
+                    ->visible(fn (DailyEntry $record): bool => ! $record->is_locked)
+                    ->requiresConfirmation()
+                    ->action(fn (DailyEntry $record) => self::lockEntry($record)),
+                Action::make('unlock')
+                    ->label(__('daily_entries.actions.unlock'))
+                    ->icon(Heroicon::OutlinedLockOpen)
+                    ->color('gray')
+                    ->visible(fn (DailyEntry $record): bool => $record->is_locked)
+                    ->requiresConfirmation()
+                    ->action(fn (DailyEntry $record) => self::unlockEntry($record)),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
@@ -144,5 +161,29 @@ class DailyEntryTable
     private static function sourceLabel(?string $state): string
     {
         return self::sourceOptions()[$state] ?? (string) $state;
+    }
+
+    private static function lockEntry(DailyEntry $record): void
+    {
+        $userId = auth()->id();
+
+        $record->update([
+            'is_locked' => true,
+            'locked_at' => now(),
+            'locked_by' => $userId,
+            'updated_by' => $userId,
+        ]);
+    }
+
+    private static function unlockEntry(DailyEntry $record): void
+    {
+        $userId = auth()->id();
+
+        $record->update([
+            'is_locked' => false,
+            'locked_at' => null,
+            'locked_by' => null,
+            'updated_by' => $userId,
+        ]);
     }
 }

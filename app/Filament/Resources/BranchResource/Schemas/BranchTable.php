@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\BranchResource\Schemas;
 
 use App\Models\Branch;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -12,6 +13,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -87,6 +89,27 @@ class BranchTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                Action::make('activate')
+                    ->label(__('branches.actions.activate'))
+                    ->icon(Heroicon::OutlinedCheckCircle)
+                    ->color('success')
+                    ->visible(fn (Branch $record): bool => $record->status !== 'active')
+                    ->requiresConfirmation()
+                    ->action(fn (Branch $record) => self::updateStatus($record, 'active')),
+                Action::make('deactivate')
+                    ->label(__('branches.actions.deactivate'))
+                    ->icon(Heroicon::OutlinedPauseCircle)
+                    ->color('gray')
+                    ->visible(fn (Branch $record): bool => $record->status !== 'inactive')
+                    ->requiresConfirmation()
+                    ->action(fn (Branch $record) => self::updateStatus($record, 'inactive')),
+                Action::make('maintenance')
+                    ->label(__('branches.actions.set_maintenance'))
+                    ->icon(Heroicon::OutlinedWrenchScrewdriver)
+                    ->color('warning')
+                    ->visible(fn (Branch $record): bool => $record->status !== 'maintenance')
+                    ->requiresConfirmation()
+                    ->action(fn (Branch $record) => self::updateStatus($record, 'maintenance')),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
@@ -113,6 +136,17 @@ class BranchTable
             'inactive' => __('branches.status.inactive'),
             'maintenance' => __('branches.status.maintenance'),
         ];
+    }
+
+    private static function updateStatus(Branch $record, string $status): void
+    {
+        $payload = ['status' => $status];
+
+        if ($userId = auth()->id()) {
+            $payload['updated_by'] = $userId;
+        }
+
+        $record->update($payload);
     }
 
     private static function statusLabel(?string $state): string
