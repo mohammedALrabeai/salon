@@ -16,13 +16,13 @@ return new class extends Migration
         $statusExpression = match ($driver) {
             'pgsql' => "CASE WHEN expiry_date IS NULL THEN 'safe' WHEN expiry_date < CURRENT_DATE THEN 'expired' WHEN expiry_date <= (CURRENT_DATE + INTERVAL '15 days') THEN 'urgent' WHEN expiry_date <= (CURRENT_DATE + INTERVAL '60 days') THEN 'near' ELSE 'safe' END",
             'mysql' => "CASE WHEN expiry_date IS NULL THEN 'safe' WHEN expiry_date < CURRENT_DATE THEN 'expired' WHEN expiry_date <= (CURRENT_DATE + INTERVAL 15 DAY) THEN 'urgent' WHEN expiry_date <= (CURRENT_DATE + INTERVAL 60 DAY) THEN 'near' ELSE 'safe' END",
-            default => "CASE WHEN expiry_date IS NULL THEN 'safe' WHEN date(expiry_date) < date('now') THEN 'expired' WHEN date(expiry_date) <= date('now', '+15 days') THEN 'urgent' WHEN date(expiry_date) <= date('now', '+60 days') THEN 'near' ELSE 'safe' END",
+            default => null,
         };
 
         $daysRemainingExpression = match ($driver) {
             'pgsql' => "CASE WHEN expiry_date IS NULL THEN NULL ELSE (expiry_date - CURRENT_DATE) END",
             'mysql' => 'DATEDIFF(expiry_date, CURRENT_DATE)',
-            default => "CASE WHEN expiry_date IS NULL THEN NULL ELSE CAST((julianday(expiry_date) - julianday('now')) AS INTEGER) END",
+            default => null,
         };
 
         Schema::create('documents', function (Blueprint $table) use ($statusExpression, $daysRemainingExpression) {
@@ -34,8 +34,13 @@ return new class extends Migration
             $table->string('title', 200)->nullable();
             $table->date('issue_date')->nullable();
             $table->date('expiry_date')->nullable();
-            $table->string('status', 20)->storedAs($statusExpression);
-            $table->integer('days_remaining')->storedAs($daysRemainingExpression);
+            if ($statusExpression && $daysRemainingExpression) {
+                $table->string('status', 20)->storedAs($statusExpression);
+                $table->integer('days_remaining')->storedAs($daysRemainingExpression);
+            } else {
+                $table->string('status', 20)->nullable();
+                $table->integer('days_remaining')->nullable();
+            }
             $table->unsignedInteger('notify_before_days')->default(30);
             $table->timestampTz('last_notified_at')->nullable();
             $table->text('notes')->nullable();

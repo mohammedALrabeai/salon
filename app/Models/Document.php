@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Carbon;
 
 class Document extends Model
 {
@@ -52,6 +54,50 @@ class Document extends Model
     public function files(): HasMany
     {
         return $this->hasMany(DocumentFile::class);
+    }
+
+    protected function status(): Attribute
+    {
+        return Attribute::get(function (?string $value, array $attributes): ?string {
+            $expiryDate = $attributes['expiry_date'] ?? null;
+
+            if (! $expiryDate) {
+                return 'safe';
+            }
+
+            $expiry = Carbon::parse($expiryDate)->startOfDay();
+            $today = now()->startOfDay();
+
+            if ($expiry->lt($today)) {
+                return 'expired';
+            }
+
+            if ($expiry->lte($today->copy()->addDays(15))) {
+                return 'urgent';
+            }
+
+            if ($expiry->lte($today->copy()->addDays(60))) {
+                return 'near';
+            }
+
+            return 'safe';
+        });
+    }
+
+    protected function daysRemaining(): Attribute
+    {
+        return Attribute::get(function (?int $value, array $attributes): ?int {
+            $expiryDate = $attributes['expiry_date'] ?? null;
+
+            if (! $expiryDate) {
+                return null;
+            }
+
+            $expiry = Carbon::parse($expiryDate)->startOfDay();
+            $today = now()->startOfDay();
+
+            return $today->diffInDays($expiry, false);
+        });
     }
 
     public function createdBy(): BelongsTo
