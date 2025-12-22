@@ -36,24 +36,28 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (ValidationException $exception, Request $request) {
-            if (! isApiRequest($request)) {
+        $isApiRequest = static function (Request $request): bool {
+            return $request->is('api/*') || str_starts_with($request->path(), 'api/');
+        };
+
+        $exceptions->render(function (ValidationException $exception, Request $request) use ($isApiRequest) {
+            if (! $isApiRequest($request)) {
                 return null;
             }
 
             return ApiResponse::validationError($exception);
         });
 
-        $exceptions->render(function (AuthenticationException $exception, Request $request) {
-            if (! isApiRequest($request)) {
+        $exceptions->render(function (AuthenticationException $exception, Request $request) use ($isApiRequest) {
+            if (! $isApiRequest($request)) {
                 return null;
             }
 
             return ApiResponse::error('TOKEN_INVALID', 'الرمز غير صالح', 401);
         });
 
-        $exceptions->render(function (PermissionDeniedException $exception, Request $request) {
-            if (! isApiRequest($request)) {
+        $exceptions->render(function (PermissionDeniedException $exception, Request $request) use ($isApiRequest) {
+            if (! $isApiRequest($request)) {
                 return null;
             }
 
@@ -63,32 +67,32 @@ return Application::configure(basePath: dirname(__DIR__))
             ]);
         });
 
-        $exceptions->render(function (AuthorizationException $exception, Request $request) {
-            if (! isApiRequest($request)) {
+        $exceptions->render(function (AuthorizationException $exception, Request $request) use ($isApiRequest) {
+            if (! $isApiRequest($request)) {
                 return null;
             }
 
             return ApiResponse::error('PERMISSION_DENIED', 'ليس لديك صلاحية لتنفيذ هذا الإجراء', 403);
         });
 
-        $exceptions->render(function (ModelNotFoundException $exception, Request $request) {
-            if (! isApiRequest($request)) {
+        $exceptions->render(function (ModelNotFoundException $exception, Request $request) use ($isApiRequest) {
+            if (! $isApiRequest($request)) {
                 return null;
             }
 
             return ApiResponse::error('RESOURCE_NOT_FOUND', 'المورد غير موجود', 404);
         });
 
-        $exceptions->render(function (NotFoundHttpException $exception, Request $request) {
-            if (! isApiRequest($request)) {
+        $exceptions->render(function (NotFoundHttpException $exception, Request $request) use ($isApiRequest) {
+            if (! $isApiRequest($request)) {
                 return null;
             }
 
             return ApiResponse::error('RESOURCE_NOT_FOUND', 'المورد غير موجود', 404);
         });
 
-        $exceptions->render(function (QueryException $exception, Request $request) {
-            if (! isApiRequest($request)) {
+        $exceptions->render(function (QueryException $exception, Request $request) use ($isApiRequest) {
+            if (! $isApiRequest($request)) {
                 return null;
             }
 
@@ -102,8 +106,8 @@ return Application::configure(basePath: dirname(__DIR__))
             return null;
         });
 
-        $exceptions->render(function (HttpExceptionInterface $exception, Request $request) {
-            if (! isApiRequest($request)) {
+        $exceptions->render(function (HttpExceptionInterface $exception, Request $request) use ($isApiRequest) {
+            if (! $isApiRequest($request)) {
                 return null;
             }
 
@@ -116,10 +120,3 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::error('ERROR', 'حدث خطأ غير متوقع', $exception->getStatusCode());
         });
     })->create();
-
-if (! function_exists('isApiRequest')) {
-    function isApiRequest(Request $request): bool
-    {
-        return $request->is('api/*') || str_starts_with($request->path(), 'api/');
-    }
-}
