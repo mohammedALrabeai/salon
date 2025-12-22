@@ -60,5 +60,7 @@ class DatabaseSeeder extends Seeder
         );
 
         $superAdmin->syncRoles(['super_admin']);
+
+        $this->call(DemoDataSeeder::class);
     }
 }
