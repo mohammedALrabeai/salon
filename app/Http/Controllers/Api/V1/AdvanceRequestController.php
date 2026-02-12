@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\AdvanceRequest;
-use App\Models\Employee;
 use App\Models\LedgerEntry;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AdvanceRequestController extends ApiController
 {
@@ -71,26 +72,30 @@ class AdvanceRequestController extends ApiController
             'amount' => ['required', 'numeric', 'min:1'],
             'reason' => ['nullable', 'string'],
             'attachment' => ['nullable', 'string'],
-            'employee_id' => ['nullable', 'uuid', 'exists:employees,id'],
+            'employee_id' => [
+                'nullable',
+                'uuid',
+                Rule::exists('users', 'id')->where(fn($query) => $query->whereIn('role', User::employeeRoles())),
+            ],
         ]);
 
         $employee = null;
 
-        if (! empty($data['employee_id'])) {
-            $employee = Employee::query()->find($data['employee_id']);
+        if (!empty($data['employee_id'])) {
+            $employee = User::query()->find($data['employee_id']);
         } else {
-            $employee = Employee::query()->where('phone', $request->user()->phone)->first();
+            $employee = User::query()->where('phone', $request->user()->phone)->first();
         }
 
-        if (! $employee) {
+        if (!$employee) {
             return $this->error('VALIDATION_ERROR', 'تعذر تحديد الموظف لهذا الطلب', 422);
         }
 
         $attachmentUrl = null;
 
-        if (! empty($data['attachment'])) {
+        if (!empty($data['attachment'])) {
             $attachmentUrl = $this->storeAttachment($data['attachment']);
-            if (! $attachmentUrl) {
+            if (!$attachmentUrl) {
                 return $this->error('VALIDATION_ERROR', 'الملف المرفق غير صالح', 422);
             }
         }
@@ -212,7 +217,7 @@ class AdvanceRequestController extends ApiController
             return null;
         }
 
-        $path = 'advance-requests/'.Str::uuid().'.'.$extension;
+        $path = 'advance-requests/' . Str::uuid() . '.' . $extension;
         Storage::disk('public')->put($path, $decoded);
 
         return Storage::disk('public')->url($path);

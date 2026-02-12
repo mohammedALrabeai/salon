@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Branch;
-use App\Models\Employee;
+use App\Models\User;
 use App\Models\LedgerEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,11 +101,11 @@ class LedgerEntryController extends ApiController
             'payment_method' => ['nullable', 'string', 'in:cash,bank_transfer,check,other'],
         ]);
 
-        if ($data['party_type'] === 'employee' && ! Employee::query()->whereKey($data['party_id'])->exists()) {
+        if ($data['party_type'] === 'employee' && !User::query()->whereKey($data['party_id'])->whereIn('role', User::employeeRoles())->exists()) {
             return $this->error('VALIDATION_ERROR', 'الطرف غير موجود', 422);
         }
 
-        if ($data['party_type'] === 'branch' && ! Branch::query()->whereKey($data['party_id'])->exists()) {
+        if ($data['party_type'] === 'branch' && !Branch::query()->whereKey($data['party_id'])->exists()) {
             return $this->error('VALIDATION_ERROR', 'الطرف غير موجود', 422);
         }
 
@@ -140,7 +140,7 @@ class LedgerEntryController extends ApiController
     {
         $this->requirePermission('ViewAny:LedgerEntry');
 
-        if (! in_array($party_type, ['employee', 'branch', 'supplier', 'customer'], true)) {
+        if (!in_array($party_type, ['employee', 'branch', 'supplier', 'customer'], true)) {
             return $this->error('VALIDATION_ERROR', 'نوع الطرف غير صالح', 422);
         }
 
@@ -164,7 +164,7 @@ class LedgerEntryController extends ApiController
         $employeeIds = $entries->where('party_type', 'employee')->pluck('party_id')->unique()->all();
         $branchIds = $entries->where('party_type', 'branch')->pluck('party_id')->unique()->all();
 
-        $employees = Employee::query()->whereIn('id', $employeeIds)->get()->keyBy('id');
+        $employees = User::query()->whereIn('id', $employeeIds)->get()->keyBy('id');
         $branches = Branch::query()->whereIn('id', $branchIds)->get()->keyBy('id');
 
         $partyMap = [
@@ -205,7 +205,7 @@ class LedgerEntryController extends ApiController
         $party = null;
 
         if ($partyType === 'employee') {
-            $employee = Employee::query()->find($partyId);
+            $employee = User::query()->find($partyId);
             $party = $employee ? ['id' => $employee->id, 'name' => $employee->name] : null;
         } elseif ($partyType === 'branch') {
             $branch = Branch::query()->find($partyId);
@@ -225,11 +225,11 @@ class LedgerEntryController extends ApiController
     private function formatBalanceLabel(float $balance): string
     {
         if ($balance < 0) {
-            return 'عليه '.number_format(abs($balance), 2).' ريال';
+            return 'عليه ' . number_format(abs($balance), 2) . ' ريال';
         }
 
         if ($balance > 0) {
-            return 'له '.number_format($balance, 2).' ريال';
+            return 'له ' . number_format($balance, 2) . ' ريال';
         }
 
         return 'متوازن';

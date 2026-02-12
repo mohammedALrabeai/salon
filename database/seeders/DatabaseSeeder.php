@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             'doc_supervisor',
             'receptionist',
             'auditor',
+            'other',
         ];
 
         foreach ($roles as $role) {

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\DailyEntryResource\Schemas;
 
-use App\Models\Employee;
+use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Placeholder;
@@ -39,13 +39,13 @@ class DailyEntryForm
                             ->relationship(
                                 name: 'employee',
                                 titleAttribute: 'name',
-                                modifyQueryUsing: fn ($query, Get $get) => $query->when(
+                                modifyQueryUsing: fn($query, Get $get) => $query->when(
                                     $get('branch_id'),
-                                    fn ($query, $branchId) => $query->where('branch_id', $branchId)
-                                )
+                                    fn($query, $branchId) => $query->where('branch_id', $branchId)
+                                )->whereIn('role', User::employeeRoles())
                             )
                             ->getOptionLabelFromRecordUsing(
-                                fn (Employee $record): string => trim("{$record->name} ({$record->phone})")
+                                fn(User $record): string => trim("{$record->name} ({$record->phone})")
                             )
                             ->searchable()
                             ->preload()
@@ -88,7 +88,7 @@ class DailyEntryForm
                             ->live(debounce: 500),
                         Placeholder::make('net')
                             ->label(__('daily_entries.fields.net'))
-                            ->content(fn (Get $get): string => Number::format(
+                            ->content(fn(Get $get): string => Number::format(
                                 ((float) $get('sales')) - ((float) $get('cash')) - ((float) $get('expense')),
                                 2,
                                 locale: app()->getLocale()

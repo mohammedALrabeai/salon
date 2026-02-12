@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Models\Branch;
 use App\Models\Document;
 use App\Models\DocumentFile;
-use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -84,11 +84,11 @@ class DocumentController extends ApiController
             'files.*' => ['file', 'max:5120'],
         ]);
 
-        if ($data['owner_type'] === 'employee' && ! Employee::query()->whereKey($data['owner_id'])->exists()) {
+        if ($data['owner_type'] === 'employee' && !User::query()->whereKey($data['owner_id'])->whereIn('role', User::employeeRoles())->exists()) {
             return $this->error('VALIDATION_ERROR', 'المالك غير موجود', 422);
         }
 
-        if ($data['owner_type'] === 'branch' && ! Branch::query()->whereKey($data['owner_id'])->exists()) {
+        if ($data['owner_type'] === 'branch' && !Branch::query()->whereKey($data['owner_id'])->exists()) {
             return $this->error('VALIDATION_ERROR', 'الفرع غير موجود', 422);
         }
 
@@ -219,7 +219,7 @@ class DocumentController extends ApiController
 
     private function storeDocumentFile(Document $document, $file, string $userId): DocumentFile
     {
-        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
+        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
         Storage::disk('public')->putFileAs('documents', $file, $filename);
 
         $nextVersion = ($document->files()->max('version') ?? 0) + 1;
@@ -230,7 +230,7 @@ class DocumentController extends ApiController
             'name' => $file->getClientOriginalName(),
             'size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
-            'file_url' => Storage::disk('public')->url('documents/'.$filename),
+            'file_url' => Storage::disk('public')->url('documents/' . $filename),
             'storage_provider' => 'local',
             'version' => $nextVersion,
             'is_current' => true,
@@ -243,7 +243,7 @@ class DocumentController extends ApiController
         $employeeIds = $documents->where('owner_type', 'employee')->pluck('owner_id')->unique()->all();
         $branchIds = $documents->where('owner_type', 'branch')->pluck('owner_id')->unique()->all();
 
-        $employees = Employee::query()->whereIn('id', $employeeIds)->get()->keyBy('id');
+        $employees = User::query()->whereIn('id', $employeeIds)->get()->keyBy('id');
         $branches = Branch::query()->whereIn('id', $branchIds)->get()->keyBy('id');
 
         $owners = [

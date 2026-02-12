@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\DailyEntry;
 use App\Models\DayClosure;
-use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 class DailyEntryController extends ApiController
 {
@@ -93,7 +94,11 @@ class DailyEntryController extends ApiController
         $this->requirePermission('Create:DailyEntry');
 
         $data = $request->validate([
-            'employee_id' => ['required', 'uuid', 'exists:employees,id'],
+            'employee_id' => [
+                'required',
+                'uuid',
+                Rule::exists('users', 'id')->where(fn($query) => $query->whereIn('role', User::employeeRoles())),
+            ],
             'branch_id' => ['required', 'uuid', 'exists:branches,id'],
             'date' => ['required', 'date'],
             'sales' => ['nullable', 'numeric', 'min:0'],
@@ -130,7 +135,7 @@ class DailyEntryController extends ApiController
             ]);
         }
 
-        $employee = Employee::query()->find($data['employee_id']);
+        $employee = User::query()->find($data['employee_id']);
 
         if ($employee && $employee->branch_id !== $data['branch_id']) {
             return $this->error('VALIDATION_ERROR', 'الموظف غير تابع لهذا الفرع', 422);
@@ -315,7 +320,7 @@ class DailyEntryController extends ApiController
         return $this->success(null, 'تم حذف الإدخال بنجاح');
     }
 
-    public function employeeStats(Request $request, Employee $employee)
+    public function employeeStats(Request $request, User $employee)
     {
         $this->requirePermission('ViewAny:DailyEntry');
 

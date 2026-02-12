@@ -48,11 +48,13 @@ return [
         'doc_supervisor' => 'مشرف وثائق',
         'receptionist' => 'استقبال',
         'auditor' => 'مدقق',
+        'other' => 'أخرى',
     ],
     'status' => [
         'active' => 'نشط',
         'inactive' => 'غير نشط',
         'suspended' => 'موقوف',
+        'on_leave' => 'في إجازة',
     ],
     'actions' => [
         'add_setting' => 'إضافة إعداد',

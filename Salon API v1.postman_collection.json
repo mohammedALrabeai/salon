@@ -1,0 +1,1666 @@
+{
+  "info": {
+    "_postman_id": "e8130593-08e2-4957-abe8-29fa50909d54",
+    "name": "Salon API v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "17450141",
+    "_collection_link": "https://go.postman.co/collection/17450141-e8130593-08e2-4957-abe8-29fa50909d54?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// var res =pm.response.json();",
+                  "//  pm.environment.set(\"access_token\", res.data.tokens.access_token);",
+                  "var res = pm.response.json();",
+                  "",
+                  "// التأكد أن الاستجابة ناجحة",
+                  "if (res.success === true && res.data && res.data.tokens) {",
+                  "    pm.environment.set(\"access_token\", res.data.tokens.access_token);",
+                  "    pm.environment.set(\"refresh_token\", res.data.tokens.refresh_token);",
+                  "    pm.environment.set(\"token_type\", res.data.tokens.token_type);",
+                  "    pm.environment.set(\"expires_at\", res.data.tokens.expires_at);",
+                  "}",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"0571718154\",\n  \"password\": \"12345678\",\n  \"device_info\": {\n    \"device_id\": \"uuid-device-id\",\n    \"device_name\": \"iPhone 14 Pro\",\n    \"os\": \"iOS 17.0\",\n    \"app_version\": \"1.0.0\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"phone\": \"0571718153\",\n  \"password\": \"12345678\",\n  \"device_info\": {\n    \"device_id\": \"uuid-device-id\",\n    \"device_name\": \"iPhone 14 Pro\",\n    \"os\": \"iOS 17.0\",\n    \"app_version\": \"1.0.0\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Host",
+                  "value": "127.0.0.1:8000"
+                },
+                {
+                  "key": "Connection",
+                  "value": "close"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "PHP/8.4.7"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, private"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 22 Dec 2025 08:38:44 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"success\": true,\n    \"message\": \"تم تسجيل الدخول بنجاح\",\n    \"data\": {\n        \"user\": {\n            \"id\": \"019b4017-4e06-7395-bd49-cb83cddaaec8\",\n            \"name\": \"Super Admin\",\n            \"phone\": \"0571718153\",\n            \"email\": \"admin@admin.com\",\n            \"role\": \"super_admin\",\n            \"branch_id\": null,\n            \"branch_name\": null,\n            \"avatar_url\": null,\n            \"status\": \"active\",\n            \"settings\": []\n        },\n        \"tokens\": {\n            \"access_token\": \"4vqpWrBTCD3jf8iDP1afj2sHmkr26GbKvI4Jl1LG4m52LQCDswAGxxewXKTT8njR\",\n            \"refresh_token\": \"wdW0vHVYR32WjjxruM8DgQx547C3jPssASO6peSl1c2dCYenBMbwVUPgZU4wuCklSD5SpDGEKMW0e1Je\",\n            \"token_type\": \"Bearer\",\n            \"expires_in\": 3600,\n            \"expires_at\": \"2025-12-22T09:38:44+00:00\"\n        },\n        \"permissions\": [\n            \"ViewAny:Activity\",\n            \"View:Activity\",\n            \"Create:Activity\",\n            \"Update:Activity\",\n            \"Delete:Activity\",\n            \"Restore:Activity\",\n            \"ForceDelete:Activity\",\n            \"ForceDeleteAny:Activity\",\n            \"RestoreAny:Activity\",\n            \"Replicate:Activity\",\n            \"Reorder:Activity\",\n            \"ViewAny:AdvanceRequest\",\n            \"View:AdvanceRequest\",\n            \"Create:AdvanceRequest\",\n            \"Update:AdvanceRequest\",\n            \"Delete:AdvanceRequest\",\n            \"Restore:AdvanceRequest\",\n            \"ForceDelete:AdvanceRequest\",\n            \"ForceDeleteAny:AdvanceRequest\",\n            \"RestoreAny:AdvanceRequest\",\n            \"Replicate:AdvanceRequest\",\n            \"Reorder:AdvanceRequest\",\n            \"ViewAny:Branch\",\n            \"View:Branch\",\n            \"Create:Branch\",\n            \"Update:Branch\",\n            \"Delete:Branch\",\n            \"Restore:Branch\",\n            \"ForceDelete:Branch\",\n            \"ForceDeleteAny:Branch\",\n            \"RestoreAny:Branch\",\n            \"Replicate:Branch\",\n            \"Reorder:Branch\",\n            \"ViewAny:DailyEntry\",\n            \"View:DailyEntry\",\n            \"Create:DailyEntry\",\n            \"Update:DailyEntry\",\n            \"Delete:DailyEntry\",\n            \"Restore:DailyEntry\",\n            \"ForceDelete:DailyEntry\",\n            \"ForceDeleteAny:DailyEntry\",\n            \"RestoreAny:DailyEntry\",\n            \"Replicate:DailyEntry\",\n            \"Reorder:DailyEntry\",\n            \"ViewAny:DayClosure\",\n            \"View:DayClosure\",\n            \"Create:DayClosure\",\n            \"Update:DayClosure\",\n            \"Delete:DayClosure\",\n            \"Restore:DayClosure\",\n            \"ForceDelete:DayClosure\",\n            \"ForceDeleteAny:DayClosure\",\n            \"RestoreAny:DayClosure\",\n            \"Replicate:DayClosure\",\n            \"Reorder:DayClosure\",\n            \"ViewAny:Document\",\n            \"View:Document\",\n            \"Create:Document\",\n            \"Update:Document\",\n            \"Delete:Document\",\n            \"Restore:Document\",\n            \"ForceDelete:Document\",\n            \"ForceDeleteAny:Document\",\n            \"RestoreAny:Document\",\n            \"Replicate:Document\",\n            \"Reorder:Document\",\n            \"ViewAny:Employee\",\n            \"View:Employee\",\n            \"Create:Employee\",\n            \"Update:Employee\",\n            \"Delete:Employee\",\n            \"Restore:Employee\",\n            \"ForceDelete:Employee\",\n            \"ForceDeleteAny:Employee\",\n            \"RestoreAny:Employee\",\n            \"Replicate:Employee\",\n            \"Reorder:Employee\",\n            \"ViewAny:LedgerEntry\",\n            \"View:LedgerEntry\",\n            \"Create:LedgerEntry\",\n            \"Update:LedgerEntry\",\n            \"Delete:LedgerEntry\",\n            \"Restore:LedgerEntry\",\n            \"ForceDelete:LedgerEntry\",\n            \"ForceDeleteAny:LedgerEntry\",\n            \"RestoreAny:LedgerEntry\",\n            \"Replicate:LedgerEntry\",\n            \"Reorder:LedgerEntry\",\n            \"ViewAny:Notification\",\n            \"View:Notification\",\n            \"Create:Notification\",\n            \"Update:Notification\",\n            \"Delete:Notification\",\n            \"Restore:Notification\",\n            \"ForceDelete:Notification\",\n            \"ForceDeleteAny:Notification\",\n            \"RestoreAny:Notification\",\n            \"Replicate:Notification\",\n            \"Reorder:Notification\",\n            \"ViewAny:User\",\n            \"View:User\",\n            \"Create:User\",\n            \"Update:User\",\n            \"Delete:User\",\n            \"Restore:User\",\n            \"ForceDelete:User\",\n            \"ForceDeleteAny:User\",\n            \"RestoreAny:User\",\n            \"Replicate:User\",\n            \"Reorder:User\",\n            \"ViewAny:Role\",\n            \"View:Role\",\n            \"Create:Role\",\n            \"Update:Role\",\n            \"Delete:Role\",\n            \"Restore:Role\",\n            \"ForceDelete:Role\",\n            \"ForceDeleteAny:Role\",\n            \"RestoreAny:Role\",\n            \"Replicate:Role\",\n            \"Reorder:Role\"\n        ]\n    },\n    \"meta\": {\n        \"timestamp\": \"2025-12-22T08:38:44+00:00\",\n        \"request_id\": \"12215393-9c39-4f97-a3c3-c563890c9fbe\",\n        \"version\": \"1.0.0\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "",
+                  "if (res.success === true && res.data) {",
+                  "    pm.environment.set(\"access_token\", res.data.access_token);",
+                  "    pm.environment.set(\"refresh_token\", res.data.refresh_token);",
+                  "    pm.environment.set(\"token_type\", res.data.token_type);",
+                  "    pm.environment.set(\"expires_at\", res.data.expires_at);",
+                  "}",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&per_page=20&status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mohammed Ahmed\",\n  \"phone\": \"0501234567\",\n  \"email\": \"mohammed@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"role\": \"barber\",\n  \"branch_id\": \"{{branch_id}}\",\n  \"status\": \"active\",\n  \"national_id\": \"1020304050\",\n  \"passport_number\": \"A12345678\",\n  \"hire_date\": \"2024-01-01\",\n  \"employment_type\": \"full_time\",\n  \"base_salary\": 3000.00,\n  \"commission_rate\": 10.0,\n  \"commission_type\": \"percentage\",\n  \"skills\": [\"haircut\", \"shaving\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Updated\",\n  \"email\": \"ahmed.new@example.com\",\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{user_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"OldPassword123!\",\n  \"new_password\": \"NewSecurePassword123!\",\n  \"new_password_confirmation\": \"NewSecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{user_id}}/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}",
+                "change-password"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Branches",
+      "item": [
+        {
+          "name": "List Branches",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/branches?status=active&city=Riyadh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "branches"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "city",
+                  "value": "Riyadh"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Branch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Khobar Branch\",\n  \"code\": \"KBR\",\n  \"city\": \"Khobar\",\n  \"region\": \"Eastern\",\n  \"address\": \"North Corniche\",\n  \"phone\": \"0133334444\",\n//   \"manager_id\": \"{{manager_id}}\",\n  \"opening_time\": \"09:00\",\n  \"closing_time\": \"23:00\",\n  \"working_days\": [\"sunday\", \"monday\", \"tuesday\", \"wednesday\", \"thursday\", \"friday\", \"saturday\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/branches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "branches"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Branch",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/branches/{{branch_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "branches",
+                "{{branch_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Daily Entries",
+      "item": [
+        {
+          "name": "List Daily Entries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/daily-entries?employee_id={{employee_id}}&date_from=2025-12-01&date_to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "daily-entries"
+              ],
+              "query": [
+                {
+                  "key": "employee_id",
+                  "value": "{{employee_id}}"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Daily Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"branch_id\": \"{{branch_id}}\",\n  \"date\": \"2025-12-22\",\n  \"sales\": 1500.0,\n  \"cash\": 500.0,\n  \"expense\": 100.0,\n  \"commission_rate\": 50.0,\n  \"bonus\": 50.0,\n  \"bonus_reason\": \"Great performance\",\n  \"note\": \"Good day\",\n  \"transactions_count\": 8\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/daily-entries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "daily-entries"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Daily Entry",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/daily-entries/{{daily_entry_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "daily-entries",
+                "{{daily_entry_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Daily Entry",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sales\": 1600.0,\n  \"cash\": 550.0,\n  \"expense\": 120.0,\n  \"bonus\": 100.0,\n  \"note\": \"Update: great day\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/daily-entries/{{daily_entry_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "daily-entries",
+                "{{daily_entry_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Daily Entry",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/daily-entries/{{daily_entry_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "daily-entries",
+                "{{daily_entry_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Employee Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/daily-entries/stats/employee/{{employee_id}}?date_from=2025-12-01&date_to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "daily-entries",
+                "stats",
+                "employee",
+                "{{employee_id}}"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Day Closures",
+      "item": [
+        {
+          "name": "List Day Closures",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/day-closures?branch_id={{branch_id}}&date_from=2025-12-01&date_to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "day-closures"
+              ],
+              "query": [
+                {
+                  "key": "branch_id",
+                  "value": "{{branch_id}}"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Day Closure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branch_id\": \"{{branch_id}}\",\n  \"date\": \"2025-12-22\",\n  \"notes\": \"Day closure 2025-12-22\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/day-closures",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "day-closures"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Day Closure",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/day-closures/{{day_closure_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "day-closures",
+                "{{day_closure_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Download Day Closure PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/pdf"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/day-closures/{{day_closure_id}}/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "day-closures",
+                "{{day_closure_id}}",
+                "pdf"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Ledger Entries",
+      "item": [
+        {
+          "name": "List Ledger Entries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ledger-entries?party_type=employee&party_id={{employee_id}}&date_from=2025-12-01&date_to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ledger-entries"
+              ],
+              "query": [
+                {
+                  "key": "party_type",
+                  "value": "employee"
+                },
+                {
+                  "key": "party_id",
+                  "value": "{{employee_id}}"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Ledger Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"party_type\": \"employee\",\n  \"party_id\": \"{{employee_id}}\",\n  \"date\": \"2025-12-22\",\n  \"type\": \"credit\",\n  \"amount\": 1000.0,\n  \"description\": \"Salary payment\",\n  \"category\": \"salary\",\n  \"payment_method\": \"bank_transfer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/ledger-entries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ledger-entries"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ledger Balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ledger-entries/balance/{{ledger_party_type}}/{{ledger_party_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ledger-entries",
+                "balance",
+                "{{ledger_party_type}}",
+                "{{ledger_party_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Advance Requests",
+      "item": [
+        {
+          "name": "List Advance Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/advance-requests?employee_id={{employee_id}}&status=pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "advance-requests"
+              ],
+              "query": [
+                {
+                  "key": "employee_id",
+                  "value": "{{employee_id}}"
+                },
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Advance Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"amount\": 500.0,\n  \"reason\": \"Emergency\",\n  \"attachment\": \"BASE64_IMAGE_DATA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/advance-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "advance-requests"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Advance Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision_notes\": \"Approved\",\n  \"payment_date\": \"2025-12-22\",\n  \"payment_method\": \"cash\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/advance-requests/{{advance_request_id}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "advance-requests",
+                "{{advance_request_id}}",
+                "approve"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Advance Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejection_reason\": \"Not possible right now\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/advance-requests/{{advance_request_id}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "advance-requests",
+                "{{advance_request_id}}",
+                "reject"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "List Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents?owner_type={{document_owner_type}}&owner_id={{document_owner_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "owner_type",
+                  "value": "{{document_owner_type}}"
+                },
+                {
+                  "key": "owner_id",
+                  "value": "{{document_owner_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "owner_type",
+                  "value": "{{document_owner_type}}",
+                  "type": "text"
+                },
+                {
+                  "key": "owner_id",
+                  "value": "{{document_owner_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "type",
+                  "value": "Residency",
+                  "type": "text"
+                },
+                {
+                  "key": "number",
+                  "value": "1234567890",
+                  "type": "text"
+                },
+                {
+                  "key": "title",
+                  "value": "Residency - Ahmed",
+                  "type": "text"
+                },
+                {
+                  "key": "issue_date",
+                  "value": "2024-01-01",
+                  "type": "text"
+                },
+                {
+                  "key": "expiry_date",
+                  "value": "2026-01-01",
+                  "type": "text"
+                },
+                {
+                  "key": "notify_before_days",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "notes",
+                  "value": "Renew in Jan 2026",
+                  "type": "text"
+                },
+                {
+                  "key": "files[]",
+                  "type": "file",
+                  "src": "/path/to/file1.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Document",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expiry_date\": \"2026-06-01\",\n  \"notify_before_days\": 60,\n  \"notes\": \"Renewed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{document_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Document File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/document.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{document_id}}/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "files"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Expiring Soon",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/expiring-soon?days=30&owner_type={{document_owner_type}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "expiring-soon"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30"
+                },
+                {
+                  "key": "owner_type",
+                  "value": "{{document_owner_type}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications?status=pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/{{notification_id}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "{{notification_id}}",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Sales Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/sales?date_from=2025-12-01&date_to=2025-12-31&group_by=day",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "sales"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-12-31"
+                },
+                {
+                  "key": "group_by",
+                  "value": "day"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Employees Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/employees?date_from=2025-12-01&date_to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "employees"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Branches Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/branches?date_from=2025-12-01&date_to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "branches"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ledger Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/ledger?party_type=employee&date_from=2025-12-01&date_to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "ledger"
+              ],
+              "query": [
+                {
+                  "key": "party_type",
+                  "value": "employee"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/dashboard?period=today",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "dashboard"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "today"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Compare Periods",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/compare?period1_from=2025-11-01&period1_to=2025-11-30&period2_from=2025-12-01&period2_to=2025-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "compare"
+              ],
+              "query": [
+                {
+                  "key": "period1_from",
+                  "value": "2025-11-01"
+                },
+                {
+                  "key": "period1_to",
+                  "value": "2025-11-30"
+                },
+                {
+                  "key": "period2_from",
+                  "value": "2025-12-01"
+                },
+                {
+                  "key": "period2_to",
+                  "value": "2025-12-31"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Create Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://your-app.com/webhooks/salon\",\n  \"events\": [\"daily_entry.created\", \"day_closure.completed\", \"advance_request.submitted\", \"document.expiring\"],\n  \"secret\": \"your_webhook_secret\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/webhooks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": "YOUR_ACCESS_TOKEN"
+    },
+    {
+      "key": "refresh_token",
+      "value": "YOUR_REFRESH_TOKEN"
+    },
+    {
+      "key": "user_id",
+      "value": "YOUR_USER_ID"
+    },
+    {
+      "key": "branch_id",
+      "value": "YOUR_BRANCH_ID"
+    },
+    {
+      "key": "manager_id",
+      "value": "YOUR_MANAGER_ID"
+    },
+    {
+      "key": "employee_id",
+      "value": "YOUR_EMPLOYEE_ID"
+    },
+    {
+      "key": "daily_entry_id",
+      "value": "YOUR_DAILY_ENTRY_ID"
+    },
+    {
+      "key": "day_closure_id",
+      "value": "YOUR_DAY_CLOSURE_ID"
+    },
+    {
+      "key": "ledger_party_type",
+      "value": "employee"
+    },
+    {
+      "key": "ledger_party_id",
+      "value": "YOUR_LEDGER_PARTY_ID"
+    },
+    {
+      "key": "advance_request_id",
+      "value": "YOUR_ADVANCE_REQUEST_ID"
+    },
+    {
+      "key": "document_id",
+      "value": "YOUR_DOCUMENT_ID"
+    },
+    {
+      "key": "document_owner_type",
+      "value": "employee"
+    },
+    {
+      "key": "document_owner_id",
+      "value": "YOUR_DOCUMENT_OWNER_ID"
+    },
+    {
+      "key": "notification_id",
+      "value": "YOUR_NOTIFICATION_ID"
+    }
+  ]
+}

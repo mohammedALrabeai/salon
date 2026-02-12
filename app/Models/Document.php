@@ -47,9 +47,9 @@ class Document extends Model
         return $this->belongsTo(Branch::class, 'owner_id')->where('owner_type', 'branch');
     }
 
-    public function employeeOwner(): BelongsTo
+    public function userOwner(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'owner_id')->where('owner_type', 'employee');
+        return $this->belongsTo(User::class, 'owner_id')->where('owner_type', 'employee');
     }
 
     public function files(): HasMany
@@ -62,7 +62,7 @@ class Document extends Model
         return Attribute::get(function (?string $value, array $attributes): ?string {
             $expiryDate = $attributes['expiry_date'] ?? null;
 
-            if (! $expiryDate) {
+            if (!$expiryDate) {
                 return 'safe';
             }
 
@@ -90,7 +90,7 @@ class Document extends Model
         return Attribute::get(function (?int $value, array $attributes): ?int {
             $expiryDate = $attributes['expiry_date'] ?? null;
 
-            if (! $expiryDate) {
+            if (!$expiryDate) {
                 return null;
             }
 

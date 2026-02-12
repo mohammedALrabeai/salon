@@ -112,6 +112,7 @@ class UserInfolist
             'doc_supervisor' => __('users.roles.doc_supervisor'),
             'receptionist' => __('users.roles.receptionist'),
             'auditor' => __('users.roles.auditor'),
+            'other' => __('users.roles.other'),
         ];
     }
 
@@ -124,6 +125,7 @@ class UserInfolist
             'active' => __('users.status.active'),
             'inactive' => __('users.status.inactive'),
             'suspended' => __('users.status.suspended'),
+            'on_leave' => __('users.status.on_leave'),
         ];
     }
 
@@ -148,6 +150,7 @@ class UserInfolist
             'doc_supervisor' => 'gray',
             'receptionist' => 'gray',
             'auditor' => 'gray',
+            'other' => 'gray',
             default => 'gray',
         };
     }
@@ -158,6 +161,7 @@ class UserInfolist
             'active' => 'success',
             'inactive' => 'gray',
             'suspended' => 'warning',
+            'on_leave' => 'info',
             default => 'gray',
         };
     }

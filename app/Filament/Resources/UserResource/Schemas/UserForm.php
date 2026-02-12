@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\UserResource\Schemas;
 
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
@@ -32,6 +34,12 @@ class UserForm
                             ->label(__('users.fields.email'))
                             ->email()
                             ->maxLength(100),
+                        TextInput::make('national_id')
+                            ->label(__('employees.fields.national_id'))
+                            ->maxLength(20),
+                        TextInput::make('passport_number')
+                            ->label(__('employees.fields.passport_number'))
+                            ->maxLength(20),
                     ])
                     ->columns(3),
                 Section::make(__('users.sections.access'))
@@ -52,14 +60,53 @@ class UserForm
                             ->preload(),
                     ])
                     ->columns(3),
+                Section::make(__('employees.sections.employment'))
+                    ->schema([
+                        DatePicker::make('hire_date')
+                            ->label(__('employees.fields.hire_date'))
+                            ->required(),
+                        DatePicker::make('termination_date')
+                            ->label(__('employees.fields.termination_date'))
+                            ->afterOrEqual('hire_date'),
+                        Select::make('employment_type')
+                            ->label(__('employees.fields.employment_type'))
+                            ->options(self::employmentTypeOptions())
+                            ->required()
+                            ->default('full_time'),
+                    ])
+                    ->columns(3),
+                Section::make(__('employees.sections.compensation'))
+                    ->schema([
+                        TextInput::make('commission_rate')
+                            ->label(__('employees.fields.commission_rate'))
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->step(0.01)
+                            ->suffix('%')
+                            ->default(50),
+                        Select::make('commission_type')
+                            ->label(__('employees.fields.commission_type'))
+                            ->options(self::commissionTypeOptions())
+                            ->required()
+                            ->default('percentage'),
+                        TextInput::make('base_salary')
+                            ->label(__('employees.fields.base_salary'))
+                            ->numeric()
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->suffix('SAR')
+                            ->default(0),
+                    ])
+                    ->columns(3),
                 Section::make(__('users.sections.security'))
                     ->schema([
                         TextInput::make('password_hash')
                             ->label(__('users.fields.password'))
                             ->password()
                             ->revealable()
-                            ->required(fn (string $operation): bool => $operation === 'create')
-                            ->dehydrated(fn (?string $state): bool => filled($state))
+                            ->required(fn(string $operation): bool => $operation === 'create')
+                            ->dehydrated(fn(?string $state): bool => filled($state))
                             ->maxLength(255),
                         TextInput::make('last_login_ip')
                             ->label(__('users.fields.last_login_ip'))
@@ -89,6 +136,9 @@ class UserForm
                         Textarea::make('bio')
                             ->label(__('users.fields.bio'))
                             ->rows(3)
+                            ->columnSpanFull(),
+                        TagsInput::make('skills')
+                            ->label(__('employees.fields.skills'))
                             ->columnSpanFull(),
                     ])
                     ->columns(2)
@@ -129,6 +179,7 @@ class UserForm
             'doc_supervisor' => __('users.roles.doc_supervisor'),
             'receptionist' => __('users.roles.receptionist'),
             'auditor' => __('users.roles.auditor'),
+            'other' => __('users.roles.other'),
         ];
     }
 
@@ -141,6 +192,31 @@ class UserForm
             'active' => __('users.status.active'),
             'inactive' => __('users.status.inactive'),
             'suspended' => __('users.status.suspended'),
+            'on_leave' => __('users.status.on_leave'),
+        ];
+    }
+    /**
+     * @return array<string, string>
+     */
+    private static function employmentTypeOptions(): array
+    {
+        return [
+            'full_time' => __('employees.employment_types.full_time'),
+            'part_time' => __('employees.employment_types.part_time'),
+            'contract' => __('employees.employment_types.contract'),
+            'freelance' => __('employees.employment_types.freelance'),
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function commissionTypeOptions(): array
+    {
+        return [
+            'percentage' => __('employees.commission_types.percentage'),
+            'fixed' => __('employees.commission_types.fixed'),
+            'tiered' => __('employees.commission_types.tiered'),
         ];
     }
 }

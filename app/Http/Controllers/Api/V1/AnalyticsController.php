@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\DailyEntry;
-use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -24,7 +24,7 @@ class AnalyticsController extends ApiController
         $query = DailyEntry::query()->whereBetween('date', [$from, $to]);
         $prevQuery = DailyEntry::query()->whereBetween('date', [$prevFrom, $prevTo]);
 
-        if (! empty($data['branch_id'])) {
+        if (!empty($data['branch_id'])) {
             $query->where('branch_id', $data['branch_id']);
             $prevQuery->where('branch_id', $data['branch_id']);
         }
@@ -50,7 +50,7 @@ class AnalyticsController extends ApiController
             ->limit(5)
             ->get()
             ->map(function ($row, $index) {
-                $employee = Employee::query()->find($row->employee_id);
+                $employee = User::query()->find($row->employee_id);
 
                 return [
                     'employee' => $employee?->name,
@@ -99,13 +99,13 @@ class AnalyticsController extends ApiController
 
         return $this->success([
             'period1' => [
-                'label' => $data['period1_from'].' إلى '.$data['period1_to'],
+                'label' => $data['period1_from'] . ' إلى ' . $data['period1_to'],
                 'sales' => $period1['sales'],
                 'net' => $period1['net'],
                 'entries' => $period1['entries'],
             ],
             'period2' => [
-                'label' => $data['period2_from'].' إلى '.$data['period2_to'],
+                'label' => $data['period2_from'] . ' إلى ' . $data['period2_to'],
                 'sales' => $period2['sales'],
                 'net' => $period2['net'],
                 'entries' => $period2['entries'],

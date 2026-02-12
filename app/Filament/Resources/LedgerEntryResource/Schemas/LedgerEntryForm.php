@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\LedgerEntryResource\Schemas;
 
 use App\Models\Branch;
-use App\Models\Employee;
+use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -33,11 +33,11 @@ class LedgerEntryForm
                             }),
                         Select::make('party_lookup')
                             ->label(__('ledger_entries.fields.party'))
-                            ->options(fn (Get $get) => self::partyOptions($get('party_type')))
+                            ->options(fn(Get $get) => self::partyOptions($get('party_type')))
                             ->searchable()
                             ->preload()
-                            ->visible(fn (Get $get): bool => in_array($get('party_type'), ['employee', 'branch'], true))
-                            ->default(fn (Get $get) => $get('party_id'))
+                            ->visible(fn(Get $get): bool => in_array($get('party_type'), ['employee', 'branch'], true))
+                            ->default(fn(Get $get) => $get('party_id'))
                             ->afterStateUpdated(function (Set $set, ?string $state): void {
                                 if ($state) {
                                     $set('party_id', $state);
@@ -57,7 +57,7 @@ class LedgerEntryForm
                         DatePicker::make('date')
                             ->label(__('ledger_entries.fields.date'))
                             ->required()
-                            ->default(fn () => now()),
+                            ->default(fn() => now()),
                         Select::make('type')
                             ->label(__('ledger_entries.fields.type'))
                             ->options(self::typeOptions())
@@ -185,11 +185,12 @@ class LedgerEntryForm
     private static function partyOptions(?string $partyType): array
     {
         if ($partyType === 'employee') {
-            return Employee::query()
+            return User::query()
+                ->whereIn('role', User::employeeRoles())
                 ->orderBy('name')
                 ->get()
                 ->mapWithKeys(
-                    fn (Employee $employee): array => [
+                    fn(User $employee): array => [
                         $employee->id => trim("{$employee->name} ({$employee->phone})"),
                     ]
                 )

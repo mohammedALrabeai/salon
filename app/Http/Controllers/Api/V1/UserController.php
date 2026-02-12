@@ -42,7 +42,7 @@ class UserController extends ApiController
         $sortOrder = $request->string('sort_order', 'desc');
         $allowedSorts = ['created_at', 'name', 'phone'];
 
-        if (! in_array($sortBy, $allowedSorts, true)) {
+        if (!in_array($sortBy, $allowedSorts, true)) {
             $sortBy = 'created_at';
         }
 
@@ -79,18 +79,33 @@ class UserController extends ApiController
             'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
             'email' => ['nullable', 'email', 'max:100', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', 'string', Rule::in([
-                'super_admin',
-                'owner',
-                'manager',
-                'accountant',
-                'barber',
-                'doc_supervisor',
-                'receptionist',
-                'auditor',
-            ])],
+            'role' => [
+                'required',
+                'string',
+                Rule::in([
+                    'super_admin',
+                    'owner',
+                    'manager',
+                    'accountant',
+                    'barber',
+                    'doc_supervisor',
+                    'receptionist',
+                    'auditor',
+                    'other',
+                ])
+            ],
             'branch_id' => ['nullable', 'uuid', 'exists:branches,id'],
-            'status' => ['nullable', Rule::in(['active', 'inactive', 'suspended'])],
+            'status' => ['nullable', Rule::in(['active', 'inactive', 'suspended', 'on_leave'])],
+            'national_id' => ['nullable', 'string', 'max:20'],
+            'passport_number' => ['nullable', 'string', 'max:20'],
+            'hire_date' => ['nullable', 'date'],
+            'commission_rate' => ['nullable', 'numeric'],
+            'commission_type' => ['nullable', 'string', Rule::in(['percentage', 'fixed', 'tiered'])],
+            'base_salary' => ['nullable', 'numeric'],
+            'employment_type' => ['nullable', 'string', Rule::in(['full_time', 'part_time', 'contract', 'freelance'])],
+            'termination_date' => ['nullable', 'date', 'after_or_equal:hire_date'],
+            'bio' => ['nullable', 'string'],
+            'skills' => ['nullable', 'array'],
         ]);
 
         $user = User::create([
@@ -101,6 +116,16 @@ class UserController extends ApiController
             'role' => $data['role'],
             'branch_id' => $data['branch_id'] ?? null,
             'status' => $data['status'] ?? 'active',
+            'national_id' => $data['national_id'] ?? null,
+            'passport_number' => $data['passport_number'] ?? null,
+            'hire_date' => $data['hire_date'] ?? null,
+            'commission_rate' => $data['commission_rate'] ?? null,
+            'commission_type' => $data['commission_type'] ?? null,
+            'base_salary' => $data['base_salary'] ?? null,
+            'employment_type' => $data['employment_type'] ?? null,
+            'termination_date' => $data['termination_date'] ?? null,
+            'bio' => $data['bio'] ?? null,
+            'skills' => $data['skills'] ?? null,
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ]);
@@ -126,14 +151,19 @@ class UserController extends ApiController
             'total_sales' => 0.0,
             'total_commission' => 0.0,
         ];
-        $employee = Employee::query()->where('phone', $user->phone)->first();
+        $stats = [
+            'total_entries' => 0,
+            'total_sales' => 0.0,
+            'total_commission' => 0.0,
+        ];
 
-        if ($employee) {
-            $totals = DailyEntry::query()
-                ->where('employee_id', $employee->id)
-                ->selectRaw('COUNT(*) as total_entries, COALESCE(SUM(sales), 0) as total_sales, COALESCE(SUM(commission), 0) as total_commission')
-                ->first();
+        // Since Employee is merged into User, we query DailyEntry directly using the user's ID
+        $totals = DailyEntry::query()
+            ->where('employee_id', $user->id)
+            ->selectRaw('COUNT(*) as total_entries, COALESCE(SUM(sales), 0) as total_sales, COALESCE(SUM(commission), 0) as total_commission')
+            ->first();
 
+        if ($totals) {
             $stats = [
                 'total_entries' => (int) ($totals->total_entries ?? 0),
                 'total_sales' => (float) ($totals->total_sales ?? 0),
@@ -170,21 +200,36 @@ class UserController extends ApiController
             'name' => ['sometimes', 'string', 'max:100'],
             'phone' => ['sometimes', 'string', 'max:20', Rule::unique('users', 'phone')->ignore($user->id)],
             'email' => ['nullable', 'email', 'max:100', Rule::unique('users', 'email')->ignore($user->id)],
-            'role' => ['sometimes', 'string', Rule::in([
-                'super_admin',
-                'owner',
-                'manager',
-                'accountant',
-                'barber',
-                'doc_supervisor',
-                'receptionist',
-                'auditor',
-            ])],
+            'role' => [
+                'sometimes',
+                'string',
+                Rule::in([
+                    'super_admin',
+                    'owner',
+                    'manager',
+                    'accountant',
+                    'barber',
+                    'doc_supervisor',
+                    'receptionist',
+                    'auditor',
+                    'other',
+                ])
+            ],
             'branch_id' => ['nullable', 'uuid', 'exists:branches,id'],
-            'status' => ['nullable', Rule::in(['active', 'inactive', 'suspended'])],
+            'status' => ['nullable', Rule::in(['active', 'inactive', 'suspended', 'on_leave'])],
             'avatar_url' => ['nullable', 'string'],
             'settings' => ['nullable', 'array'],
             'preferences' => ['nullable', 'array'],
+            'national_id' => ['nullable', 'string', 'max:20'],
+            'passport_number' => ['nullable', 'string', 'max:20'],
+            'hire_date' => ['nullable', 'date'],
+            'commission_rate' => ['nullable', 'numeric'],
+            'commission_type' => ['nullable', 'string', Rule::in(['percentage', 'fixed', 'tiered'])],
+            'base_salary' => ['nullable', 'numeric'],
+            'employment_type' => ['nullable', 'string', Rule::in(['full_time', 'part_time', 'contract', 'freelance'])],
+            'termination_date' => ['nullable', 'date', 'after_or_equal:hire_date'],
+            'bio' => ['nullable', 'string'],
+            'skills' => ['nullable', 'array'],
         ]);
 
         $user->forceFill($data);
@@ -219,7 +264,7 @@ class UserController extends ApiController
             'new_password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (! Hash::check($data['current_password'], $user->password_hash)) {
+        if (!Hash::check($data['current_password'], $user->password_hash)) {
             return $this->error('INVALID_CREDENTIALS', 'كلمة المرور الحالية غير صحيحة', 401);
         }
 

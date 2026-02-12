@@ -76,6 +76,7 @@ return [
         'doc_supervisor' => 'مشرف وثائق',
         'receptionist' => 'استقبال',
         'auditor' => 'مدقق',
+        'other' => 'أخرى',
     ],
     'actions' => [
         'add_data' => 'إضافة عنصر بيانات',

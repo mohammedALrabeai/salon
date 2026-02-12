@@ -4,7 +4,7 @@ namespace App\Filament\Resources\DocumentResource\Schemas;
 
 use App\Models\Branch;
 use App\Models\Document;
-use App\Models\Employee;
+use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Placeholder;
@@ -36,11 +36,11 @@ class DocumentForm
                             }),
                         Select::make('owner_selector')
                             ->label(__('documents.fields.owner'))
-                            ->options(fn (Get $get): array => self::ownerOptions($get('owner_type')))
+                            ->options(fn(Get $get): array => self::ownerOptions($get('owner_type')))
                             ->searchable()
                             ->preload()
-                            ->visible(fn (Get $get): bool => in_array($get('owner_type'), ['employee', 'branch'], true))
-                            ->default(fn (Get $get) => $get('owner_id'))
+                            ->visible(fn(Get $get): bool => in_array($get('owner_type'), ['employee', 'branch'], true))
+                            ->default(fn(Get $get) => $get('owner_id'))
                             ->afterStateUpdated(function (Set $set, ?string $state): void {
                                 $set('owner_id', $state);
                             })
@@ -51,7 +51,7 @@ class DocumentForm
                             ->maxLength(36)
                             ->rule('uuid')
                             ->required()
-                            ->hidden(fn (Get $get): bool => in_array($get('owner_type'), ['employee', 'branch'], true)),
+                            ->hidden(fn(Get $get): bool => in_array($get('owner_type'), ['employee', 'branch'], true)),
                         TextInput::make('type')
                             ->label(__('documents.fields.type'))
                             ->required()
@@ -82,10 +82,10 @@ class DocumentForm
                             ->disabled(),
                         Placeholder::make('status_display')
                             ->label(__('documents.fields.status'))
-                            ->content(fn (?Document $record): string => self::statusLabel($record?->status)),
+                            ->content(fn(?Document $record): string => self::statusLabel($record?->status)),
                         Placeholder::make('days_remaining_display')
                             ->label(__('documents.fields.days_remaining'))
-                            ->content(fn (?Document $record): string => self::daysRemainingLabel($record?->days_remaining)),
+                            ->content(fn(?Document $record): string => self::daysRemainingLabel($record?->days_remaining)),
                     ])
                     ->columns(3),
                 Section::make(__('documents.sections.notes'))
@@ -119,11 +119,12 @@ class DocumentForm
     private static function ownerOptions(?string $ownerType): array
     {
         if ($ownerType === 'employee') {
-            return Employee::query()
+            return User::query()
+                ->whereIn('role', User::employeeRoles())
                 ->orderBy('name')
                 ->get()
                 ->mapWithKeys(
-                    fn (Employee $employee): array => [
+                    fn(User $employee): array => [
                         $employee->id => trim("{$employee->name} ({$employee->phone})"),
                     ]
                 )
@@ -155,7 +156,7 @@ class DocumentForm
 
     private static function statusLabel(?string $state): string
     {
-        if (! $state) {
+        if (!$state) {
             return '-';
         }
 

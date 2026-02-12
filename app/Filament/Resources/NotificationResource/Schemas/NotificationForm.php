@@ -190,6 +190,7 @@ class NotificationForm
             'doc_supervisor' => __('notifications.roles.doc_supervisor'),
             'receptionist' => __('notifications.roles.receptionist'),
             'auditor' => __('notifications.roles.auditor'),
+            'other' => __('notifications.roles.other'),
         ];
     }
 

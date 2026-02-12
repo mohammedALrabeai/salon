@@ -48,11 +48,13 @@ return [
         'doc_supervisor' => 'Document Supervisor',
         'receptionist' => 'Receptionist',
         'auditor' => 'Auditor',
+        'other' => 'Other',
     ],
     'status' => [
         'active' => 'Active',
         'inactive' => 'Inactive',
         'suspended' => 'Suspended',
+        'on_leave' => 'On Leave',
     ],
     'actions' => [
         'add_setting' => 'Add setting',

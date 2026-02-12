@@ -76,6 +76,7 @@ return [
         'doc_supervisor' => 'Document Supervisor',
         'receptionist' => 'Receptionist',
         'auditor' => 'Auditor',
+        'other' => 'Other',
     ],
     'actions' => [
         'add_data' => 'Add payload item',

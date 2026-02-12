@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Branch;
 use App\Models\DailyEntry;
-use App\Models\Employee;
+use App\Models\User;
 use App\Models\LedgerEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,11 +28,11 @@ class ReportController extends ApiController
 
         $query = DailyEntry::query()->whereBetween('date', [$from, $to]);
 
-        if (! empty($data['branch_id'])) {
+        if (!empty($data['branch_id'])) {
             $query->where('branch_id', $data['branch_id']);
         }
 
-        if (! empty($data['employee_id'])) {
+        if (!empty($data['employee_id'])) {
             $query->where('employee_id', $data['employee_id']);
         }
 
@@ -59,7 +59,7 @@ class ReportController extends ApiController
             ->limit(5)
             ->get()
             ->map(function ($row) {
-                $employee = Employee::query()->find($row->employee_id);
+                $employee = User::query()->find($row->employee_id);
 
                 return [
                     'employee_id' => $row->employee_id,
@@ -135,7 +135,7 @@ class ReportController extends ApiController
 
         $query = DailyEntry::query()->whereBetween('date', [$from, $to]);
 
-        if (! empty($data['branch_id'])) {
+        if (!empty($data['branch_id'])) {
             $query->where('branch_id', $data['branch_id']);
         }
 
@@ -145,7 +145,7 @@ class ReportController extends ApiController
             ->get();
 
         $employeeIds = $rows->pluck('employee_id')->all();
-        $employees = Employee::query()->whereIn('id', $employeeIds)->get()->keyBy('id');
+        $employees = User::query()->whereIn('id', $employeeIds)->get()->keyBy('id');
 
         $bestDays = $this->bestDaysByEmployee($from, $to, $employeeIds);
 
@@ -233,7 +233,7 @@ class ReportController extends ApiController
                 ],
                 'performance' => $performance,
             ];
-        })->values()->sortByDesc(fn ($item) => $item['stats']['total_sales'])->values()->map(function ($item, $index) {
+        })->values()->sortByDesc(fn($item) => $item['stats']['total_sales'])->values()->map(function ($item, $index) {
             $item['rank'] = $index + 1;
 
             return $item;
@@ -266,7 +266,7 @@ class ReportController extends ApiController
         $parties = [];
 
         if ($data['party_type'] === 'employee') {
-            $parties = Employee::query()->whereIn('id', $partyIds)->get()->keyBy('id');
+            $parties = User::query()->whereIn('id', $partyIds)->get()->keyBy('id');
         } elseif ($data['party_type'] === 'branch') {
             $parties = Branch::query()->whereIn('id', $partyIds)->get()->keyBy('id');
         }
@@ -282,8 +282,8 @@ class ReportController extends ApiController
                 ],
                 'balance' => $balance,
                 'balance_label' => $balance < 0
-                    ? 'عليه '.number_format(abs($balance), 2).' ريال'
-                    : ($balance > 0 ? 'له '.number_format($balance, 2).' ريال' : 'متوازن'),
+                    ? 'عليه ' . number_format(abs($balance), 2) . ' ريال'
+                    : ($balance > 0 ? 'له ' . number_format($balance, 2) . ' ريال' : 'متوازن'),
                 'total_debit' => (float) $row->total_debit,
                 'total_credit' => (float) $row->total_credit,
                 'entries_count' => (int) $row->entries_count,
@@ -370,7 +370,7 @@ class ReportController extends ApiController
 
         foreach ($rows as $row) {
             $current = $bestDays[$row->employee_id] ?? null;
-            if (! $current || $row->total_sales > $current['sales']) {
+            if (!$current || $row->total_sales > $current['sales']) {
                 $bestDays[$row->employee_id] = [
                     'date' => $row->date?->toDateString(),
                     'sales' => (float) $row->total_sales,

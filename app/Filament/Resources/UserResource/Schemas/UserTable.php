@@ -40,17 +40,21 @@ class UserTable
                 TextColumn::make('role')
                     ->label(__('users.fields.role'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::roleLabel($state))
-                    ->color(fn (?string $state): string => self::roleColor($state))
+                    ->formatStateUsing(fn(?string $state): string => self::roleLabel($state))
+                    ->color(fn(?string $state): string => self::roleColor($state))
                     ->sortable(),
+                TextColumn::make('national_id')
+                    ->label(__('employees.fields.national_id'))
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('branch.name')
                     ->label(__('users.fields.branch_id'))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->label(__('users.fields.status'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::statusLabel($state))
-                    ->color(fn (?string $state): string => self::statusColor($state))
+                    ->formatStateUsing(fn(?string $state): string => self::statusLabel($state))
+                    ->color(fn(?string $state): string => self::statusColor($state))
                     ->sortable(),
                 TextColumn::make('last_login_at')
                     ->label(__('users.fields.last_login_at'))
@@ -92,23 +96,23 @@ class UserTable
                     ->label(__('users.actions.activate'))
                     ->icon(Heroicon::OutlinedCheckCircle)
                     ->color('success')
-                    ->visible(fn (User $record): bool => $record->status !== 'active')
+                    ->visible(fn(User $record): bool => $record->status !== 'active')
                     ->requiresConfirmation()
-                    ->action(fn (User $record) => self::updateStatus($record, 'active')),
+                    ->action(fn(User $record) => self::updateStatus($record, 'active')),
                 Action::make('suspend')
                     ->label(__('users.actions.suspend'))
                     ->icon(Heroicon::OutlinedNoSymbol)
                     ->color('warning')
-                    ->visible(fn (User $record): bool => $record->status !== 'suspended')
+                    ->visible(fn(User $record): bool => $record->status !== 'suspended')
                     ->requiresConfirmation()
-                    ->action(fn (User $record) => self::updateStatus($record, 'suspended')),
+                    ->action(fn(User $record) => self::updateStatus($record, 'suspended')),
                 Action::make('deactivate')
                     ->label(__('users.actions.deactivate'))
                     ->icon(Heroicon::OutlinedPauseCircle)
                     ->color('gray')
-                    ->visible(fn (User $record): bool => $record->status !== 'inactive')
+                    ->visible(fn(User $record): bool => $record->status !== 'inactive')
                     ->requiresConfirmation()
-                    ->action(fn (User $record) => self::updateStatus($record, 'inactive')),
+                    ->action(fn(User $record) => self::updateStatus($record, 'inactive')),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
@@ -139,6 +143,7 @@ class UserTable
             'doc_supervisor' => __('users.roles.doc_supervisor'),
             'receptionist' => __('users.roles.receptionist'),
             'auditor' => __('users.roles.auditor'),
+            'other' => __('users.roles.other'),
         ];
     }
 
@@ -151,6 +156,7 @@ class UserTable
             'active' => __('users.status.active'),
             'inactive' => __('users.status.inactive'),
             'suspended' => __('users.status.suspended'),
+            'on_leave' => __('users.status.on_leave'),
         ];
     }
 
@@ -186,6 +192,7 @@ class UserTable
             'doc_supervisor' => 'gray',
             'receptionist' => 'gray',
             'auditor' => 'gray',
+            'other' => 'gray',
             default => 'gray',
         };
     }
@@ -196,7 +203,9 @@ class UserTable
             'active' => 'success',
             'inactive' => 'gray',
             'suspended' => 'warning',
+            'on_leave' => 'info',
             default => 'gray',
         };
     }
+
 }

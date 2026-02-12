@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\AdvanceRequestResource\Schemas;
 
-use App\Models\Employee;
+use App\Models\User;
 use App\Models\LedgerEntry;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -37,13 +37,13 @@ class AdvanceRequestForm
                             ->relationship(
                                 name: 'employee',
                                 titleAttribute: 'name',
-                                modifyQueryUsing: fn ($query, Get $get) => $query->when(
+                                modifyQueryUsing: fn($query, Get $get) => $query->when(
                                     $get('branch_id'),
-                                    fn ($query, $branchId) => $query->where('branch_id', $branchId)
-                                )
+                                    fn($query, $branchId) => $query->where('branch_id', $branchId)
+                                )->whereIn('role', User::employeeRoles())
                             )
                             ->getOptionLabelFromRecordUsing(
-                                fn (Employee $record): string => trim("{$record->name} ({$record->phone})")
+                                fn(User $record): string => trim("{$record->name} ({$record->phone})")
                             )
                             ->searchable()
                             ->preload()
@@ -58,7 +58,7 @@ class AdvanceRequestForm
                         DateTimePicker::make('requested_at')
                             ->label(__('advance_requests.fields.requested_at'))
                             ->seconds(false)
-                            ->default(fn () => now())
+                            ->default(fn() => now())
                             ->required(),
                         Select::make('status')
                             ->label(__('advance_requests.fields.status'))
@@ -91,8 +91,8 @@ class AdvanceRequestForm
                         Textarea::make('rejection_reason')
                             ->label(__('advance_requests.fields.rejection_reason'))
                             ->rows(2)
-                            ->visible(fn (Get $get): bool => $get('status') === 'rejected')
-                            ->required(fn (Get $get): bool => $get('status') === 'rejected')
+                            ->visible(fn(Get $get): bool => $get('status') === 'rejected')
+                            ->required(fn(Get $get): bool => $get('status') === 'rejected')
                             ->columnSpanFull(),
                     ])
                     ->columns(2)
@@ -102,21 +102,21 @@ class AdvanceRequestForm
                     ->schema([
                         DatePicker::make('payment_date')
                             ->label(__('advance_requests.fields.payment_date'))
-                            ->visible(fn (Get $get): bool => $get('status') === 'approved')
-                            ->required(fn (Get $get): bool => $get('status') === 'approved'),
+                            ->visible(fn(Get $get): bool => $get('status') === 'approved')
+                            ->required(fn(Get $get): bool => $get('status') === 'approved'),
                         Select::make('payment_method')
                             ->label(__('advance_requests.fields.payment_method'))
                             ->options(self::paymentMethodOptions())
-                            ->visible(fn (Get $get): bool => $get('status') === 'approved')
-                            ->required(fn (Get $get): bool => $get('status') === 'approved'),
+                            ->visible(fn(Get $get): bool => $get('status') === 'approved')
+                            ->required(fn(Get $get): bool => $get('status') === 'approved'),
                         Select::make('ledger_entry_id')
                             ->label(__('advance_requests.fields.ledger_entry_id'))
                             ->relationship('ledgerEntry', 'description')
                             ->getOptionLabelFromRecordUsing(
-                                fn (LedgerEntry $record): string => trim("{$record->description} ({$record->amount} SAR)")
+                                fn(LedgerEntry $record): string => trim("{$record->description} ({$record->amount} SAR)")
                             )
                             ->searchable()
-                            ->visible(fn (Get $get): bool => $get('status') === 'approved'),
+                            ->visible(fn(Get $get): bool => $get('status') === 'approved'),
                         TextInput::make('attachment_url')
                             ->label(__('advance_requests.fields.attachment_url'))
                             ->url()

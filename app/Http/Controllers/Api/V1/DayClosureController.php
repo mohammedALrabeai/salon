@@ -161,7 +161,7 @@ class DayClosureController extends ApiController
             ->get();
 
         $employees = $entries->pluck('employee_id')->all();
-        $employeeNames = \App\Models\Employee::query()
+        $employeeNames = \App\Models\User::query()
             ->whereIn('id', $employees)
             ->pluck('name', 'id');
 
@@ -206,7 +206,7 @@ class DayClosureController extends ApiController
     {
         $this->requirePermission('View:DayClosure');
 
-        if (! $dayClosure->pdf_generated_at) {
+        if (!$dayClosure->pdf_generated_at) {
             $dayClosure->forceFill([
                 'pdf_generated_at' => now(),
             ])->save();
@@ -214,16 +214,16 @@ class DayClosureController extends ApiController
 
         $content = $this->buildPdf([
             'Salon Day Closure',
-            'Branch: '.$dayClosure->branch_id,
-            'Date: '.$dayClosure->date?->toDateString(),
-            'Total Sales: '.$dayClosure->total_sales,
-            'Total Net: '.$dayClosure->total_net,
-            'Entries: '.$dayClosure->entries_count,
+            'Branch: ' . $dayClosure->branch_id,
+            'Date: ' . $dayClosure->date?->toDateString(),
+            'Total Sales: ' . $dayClosure->total_sales,
+            'Total Net: ' . $dayClosure->total_net,
+            'Entries: ' . $dayClosure->entries_count,
         ]);
 
         return response($content, 200)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="closure-'.$dayClosure->date?->toDateString().'.pdf"');
+            ->header('Content-Disposition', 'inline; filename="closure-' . $dayClosure->date?->toDateString() . '.pdf"');
     }
 
     private function buildPdf(array $lines): string
@@ -235,7 +235,7 @@ class DayClosureController extends ApiController
         $stream = "BT\n/F1 12 Tf\n50 750 Td\n";
         $first = true;
         foreach ($escapedLines as $line) {
-            if (! $first) {
+            if (!$first) {
                 $stream .= "T*\n";
             }
             $stream .= "({$line}) Tj\n";
@@ -247,7 +247,7 @@ class DayClosureController extends ApiController
             "<< /Type /Catalog /Pages 2 0 R >>",
             "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
             "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
-            "<< /Length ".strlen($stream)." >>\nstream\n{$stream}\nendstream",
+            "<< /Length " . strlen($stream) . " >>\nstream\n{$stream}\nendstream",
             "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
         ];
 
@@ -256,11 +256,11 @@ class DayClosureController extends ApiController
 
         foreach ($objects as $index => $object) {
             $offsets[$index + 1] = strlen($pdf);
-            $pdf .= ($index + 1)." 0 obj\n{$object}\nendobj\n";
+            $pdf .= ($index + 1) . " 0 obj\n{$object}\nendobj\n";
         }
 
         $xrefOffset = strlen($pdf);
-        $pdf .= "xref\n0 ".(count($objects) + 1)."\n";
+        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
         $pdf .= "0000000000 65535 f \n";
 
         foreach ($offsets as $offset) {
@@ -270,7 +270,7 @@ class DayClosureController extends ApiController
             $pdf .= sprintf("%010d 00000 n \n", $offset);
         }
 
-        $pdf .= "trailer\n<< /Size ".(count($objects) + 1)." /Root 1 0 R >>\n";
+        $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\n";
         $pdf .= "startxref\n{$xrefOffset}\n%%EOF";
 
         return $pdf;
