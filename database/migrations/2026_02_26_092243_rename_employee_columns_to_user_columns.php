@@ -52,14 +52,13 @@ return new class extends Migration {
         // For SQLite, Schema::table(... change()) requires doctrine/dbal. 
         // If it throws errors on sqlite for enums, we'll recreate the check constraint or just change it to string, update, and back.
 
-        if ($driver === 'sqlite') {
-            DB::statement('PRAGMA writable_schema = 1;');
-        }
-
         if (Schema::hasTable('documents')) {
             if ($driver === 'sqlite') {
-                // Change ENUM to string type first to drop the check constraint
-                DB::statement('UPDATE sqlite_master SET sql = replace(sql, "\'employee\'", "\'user\'") WHERE type = "table" AND name = "documents"');
+                // To bypass check constraints on SQLite, we convert the ENUM column to a standard string.
+                // Laravel's Schema builder will rebuild the table automatically while preserving data.
+                Schema::table('documents', function (Blueprint $table) {
+                    $table->string('owner_type')->change();
+                });
             } elseif ($driver === 'pgsql') {
                 DB::statement("ALTER TABLE documents DROP CONSTRAINT IF EXISTS documents_owner_type_check");
                 DB::statement("ALTER TABLE documents ADD CONSTRAINT documents_owner_type_check CHECK (owner_type in ('user','branch','company'))");
@@ -67,7 +66,6 @@ return new class extends Migration {
                 DB::statement("ALTER TABLE documents MODIFY COLUMN owner_type ENUM('user', 'branch', 'company') NOT NULL");
             }
 
-            // Now safe to update data
             DB::table('documents')
                 ->where('owner_type', 'employee')
                 ->update(['owner_type' => 'user']);
@@ -75,7 +73,9 @@ return new class extends Migration {
 
         if (Schema::hasTable('ledger_entries')) {
             if ($driver === 'sqlite') {
-                DB::statement('UPDATE sqlite_master SET sql = replace(sql, "\'employee\'", "\'user\'") WHERE type = "table" AND name = "ledger_entries"');
+                Schema::table('ledger_entries', function (Blueprint $table) {
+                    $table->string('party_type')->change();
+                });
             } elseif ($driver === 'pgsql') {
                 DB::statement("ALTER TABLE ledger_entries DROP CONSTRAINT IF EXISTS ledger_entries_party_type_check");
                 DB::statement("ALTER TABLE ledger_entries ADD CONSTRAINT ledger_entries_party_type_check CHECK (party_type in ('user','branch','supplier','customer'))");
@@ -90,7 +90,9 @@ return new class extends Migration {
 
         if (Schema::hasTable('analytics_daily')) {
             if ($driver === 'sqlite') {
-                DB::statement('UPDATE sqlite_master SET sql = replace(sql, "\'employee\'", "\'user\'") WHERE type = "table" AND name = "analytics_daily"');
+                Schema::table('analytics_daily', function (Blueprint $table) {
+                    $table->string('scope_type')->change();
+                });
             } elseif ($driver === 'pgsql') {
                 DB::statement("ALTER TABLE analytics_daily DROP CONSTRAINT IF EXISTS analytics_daily_scope_type_check");
                 DB::statement("ALTER TABLE analytics_daily ADD CONSTRAINT analytics_daily_scope_type_check CHECK (scope_type in ('system','branch','user'))");
@@ -104,7 +106,6 @@ return new class extends Migration {
         }
 
         if ($driver === 'sqlite') {
-            DB::statement('PRAGMA writable_schema = 0;');
             DB::statement('PRAGMA foreign_keys=ON;');
         }
     }
