@@ -35,8 +35,8 @@ class DailyEntryTable
                     ->label(__('daily_entries.fields.branch_id'))
                     ->sortable()
                     ->toggleable(),
-                TextColumn::make('employee.name')
-                    ->label(__('daily_entries.fields.employee_id'))
+                TextColumn::make('user.name')
+                    ->label(__('daily_entries.fields.user_id'))
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('sales')
@@ -73,7 +73,7 @@ class DailyEntryTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('source')
                     ->label(__('daily_entries.fields.source'))
-                    ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
+                    ->formatStateUsing(fn(?string $state): string => self::sourceLabel($state))
                     ->badge()
                     ->toggleable(),
                 IconColumn::make('is_locked')
@@ -103,9 +103,9 @@ class DailyEntryTable
                 SelectFilter::make('branch_id')
                     ->label(__('daily_entries.fields.branch_id'))
                     ->relationship('branch', 'name'),
-                SelectFilter::make('employee_id')
-                    ->label(__('daily_entries.fields.employee_id'))
-                    ->relationship('employee', 'name'),
+                SelectFilter::make('user_id')
+                    ->label(__('daily_entries.fields.user_id'))
+                    ->relationship('user', 'name'),
                 SelectFilter::make('source')
                     ->label(__('daily_entries.fields.source'))
                     ->options(self::sourceOptions()),
@@ -120,16 +120,16 @@ class DailyEntryTable
                     ->label(__('daily_entries.actions.lock'))
                     ->icon(Heroicon::OutlinedLockClosed)
                     ->color('success')
-                    ->visible(fn (DailyEntry $record): bool => ! $record->is_locked)
+                    ->visible(fn(DailyEntry $record): bool => !$record->is_locked)
                     ->requiresConfirmation()
-                    ->action(fn (DailyEntry $record) => self::lockEntry($record)),
+                    ->action(fn(DailyEntry $record) => self::lockEntry($record)),
                 Action::make('unlock')
                     ->label(__('daily_entries.actions.unlock'))
                     ->icon(Heroicon::OutlinedLockOpen)
                     ->color('gray')
-                    ->visible(fn (DailyEntry $record): bool => $record->is_locked)
+                    ->visible(fn(DailyEntry $record): bool => $record->is_locked)
                     ->requiresConfirmation()
-                    ->action(fn (DailyEntry $record) => self::unlockEntry($record)),
+                    ->action(fn(DailyEntry $record) => self::unlockEntry($record)),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),

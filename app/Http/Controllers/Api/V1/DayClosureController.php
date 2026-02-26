@@ -100,7 +100,7 @@ class DayClosureController extends ApiController
             'total_commission' => (float) $entries->sum('commission'),
             'total_bonus' => (float) $entries->sum('bonus'),
             'entries_count' => $entries->count(),
-            'employees_count' => $entries->pluck('employee_id')->unique()->count(),
+            'employees_count' => $entries->pluck('user_id')->unique()->count(),
         ];
 
         $closure = DB::transaction(function () use ($data, $summary, $request) {
@@ -156,13 +156,13 @@ class DayClosureController extends ApiController
         $entries = DailyEntry::query()
             ->where('branch_id', $dayClosure->branch_id)
             ->whereDate('date', $dayClosure->date)
-            ->select('employee_id', DB::raw('COALESCE(SUM(sales), 0) as sales'), DB::raw('COALESCE(SUM(commission), 0) as commission'), DB::raw('COALESCE(SUM(bonus), 0) as bonus'))
-            ->groupBy('employee_id')
+            ->select('user_id', DB::raw('COALESCE(SUM(sales), 0) as sales'), DB::raw('COALESCE(SUM(commission), 0) as commission'), DB::raw('COALESCE(SUM(bonus), 0) as bonus'))
+            ->groupBy('user_id')
             ->get();
 
-        $employees = $entries->pluck('employee_id')->all();
-        $employeeNames = \App\Models\User::query()
-            ->whereIn('id', $employees)
+        $users = $entries->pluck('user_id')->all();
+        $userNames = \App\Models\User::query()
+            ->whereIn('id', $users)
             ->pluck('name', 'id');
 
         return $this->success([
@@ -183,9 +183,9 @@ class DayClosureController extends ApiController
                 'entries_count' => (int) $dayClosure->entries_count,
                 'employees_count' => (int) $dayClosure->employees_count,
             ],
-            'entries' => $entries->map(function ($entry) use ($employeeNames) {
+            'entries' => $entries->map(function ($entry) use ($userNames) {
                 return [
-                    'employee_name' => $employeeNames[$entry->employee_id] ?? null,
+                    'user_name' => $userNames[$entry->user_id] ?? null,
                     'sales' => (float) $entry->sales,
                     'commission' => (float) $entry->commission,
                     'bonus' => (float) $entry->bonus,

@@ -159,7 +159,7 @@ class UserController extends ApiController
 
         // Since Employee is merged into User, we query DailyEntry directly using the user's ID
         $totals = DailyEntry::query()
-            ->where('employee_id', $user->id)
+            ->where('user_id', $user->id)
             ->selectRaw('COUNT(*) as total_entries, COALESCE(SUM(sales), 0) as total_sales, COALESCE(SUM(commission), 0) as total_commission')
             ->first();
 

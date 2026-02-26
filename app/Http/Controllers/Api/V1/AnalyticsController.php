@@ -44,16 +44,16 @@ class AnalyticsController extends ApiController
         ];
 
         $topPerformers = (clone $query)
-            ->select('employee_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'))
-            ->groupBy('employee_id')
+            ->select('user_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'))
+            ->groupBy('user_id')
             ->orderByDesc('total_sales')
             ->limit(5)
             ->get()
             ->map(function ($row, $index) {
-                $employee = User::query()->find($row->employee_id);
+                $user = User::query()->find($row->user_id);
 
                 return [
-                    'employee' => $employee?->name,
+                    'user' => $user?->name,
                     'sales' => (float) $row->total_sales,
                     'rank' => $index + 1,
                 ];
@@ -154,7 +154,7 @@ class AnalyticsController extends ApiController
             ->selectRaw('COALESCE(SUM(sales), 0) as total_sales')
             ->selectRaw('COALESCE(SUM(net), 0) as total_net')
             ->selectRaw('COUNT(*) as entries_count')
-            ->selectRaw('COUNT(DISTINCT employee_id) as employees_count')
+            ->selectRaw('COUNT(DISTINCT user_id) as employees_count')
             ->first();
 
         return [

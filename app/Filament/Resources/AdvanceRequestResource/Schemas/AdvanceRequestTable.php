@@ -40,8 +40,8 @@ class AdvanceRequestTable
                     ->label(__('advance_requests.fields.branch_id'))
                     ->sortable()
                     ->toggleable(),
-                TextColumn::make('employee.name')
-                    ->label(__('advance_requests.fields.employee_id'))
+                TextColumn::make('user.name')
+                    ->label(__('advance_requests.fields.user_id'))
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('amount')
@@ -52,12 +52,12 @@ class AdvanceRequestTable
                 TextColumn::make('status')
                     ->label(__('advance_requests.fields.status'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::statusLabel($state))
-                    ->color(fn (?string $state): string => self::statusColor($state))
+                    ->formatStateUsing(fn(?string $state): string => self::statusLabel($state))
+                    ->color(fn(?string $state): string => self::statusColor($state))
                     ->sortable(),
                 TextColumn::make('payment_method')
                     ->label(__('advance_requests.fields.payment_method'))
-                    ->formatStateUsing(fn (?string $state): string => self::paymentMethodLabel($state))
+                    ->formatStateUsing(fn(?string $state): string => self::paymentMethodLabel($state))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('payment_date')
                     ->label(__('advance_requests.fields.payment_date'))
@@ -98,9 +98,9 @@ class AdvanceRequestTable
                 SelectFilter::make('branch_id')
                     ->label(__('advance_requests.fields.branch_id'))
                     ->relationship('branch', 'name'),
-                SelectFilter::make('employee_id')
-                    ->label(__('advance_requests.fields.employee_id'))
-                    ->relationship('employee', 'name'),
+                SelectFilter::make('user_id')
+                    ->label(__('advance_requests.fields.user_id'))
+                    ->relationship('user', 'name'),
                 SelectFilter::make('payment_method')
                     ->label(__('advance_requests.fields.payment_method'))
                     ->options(self::paymentMethodOptions()),
@@ -118,11 +118,11 @@ class AdvanceRequestTable
                         return $query
                             ->when(
                                 $data['from'] ?? null,
-                                fn (Builder $query, $date): Builder => $query->whereDate('requested_at', '>=', $date)
+                                fn(Builder $query, $date): Builder => $query->whereDate('requested_at', '>=', $date)
                             )
                             ->when(
                                 $data['until'] ?? null,
-                                fn (Builder $query, $date): Builder => $query->whereDate('requested_at', '<=', $date)
+                                fn(Builder $query, $date): Builder => $query->whereDate('requested_at', '<=', $date)
                             );
                     }),
                 TrashedFilter::make(),
@@ -132,24 +132,24 @@ class AdvanceRequestTable
                     ->label(__('advance_requests.actions.approve'))
                     ->icon(Heroicon::OutlinedCheckCircle)
                     ->color('success')
-                    ->visible(fn (AdvanceRequest $record): bool => $record->status === 'pending')
+                    ->visible(fn(AdvanceRequest $record): bool => $record->status === 'pending')
                     ->schema([
                         DatePicker::make('payment_date')
                             ->label(__('advance_requests.fields.payment_date'))
                             ->required()
-                            ->default(fn () => now()),
+                            ->default(fn() => now()),
                         Select::make('payment_method')
                             ->label(__('advance_requests.fields.payment_method'))
                             ->options(self::paymentMethodOptions())
                             ->required(),
                         Select::make('ledger_entry_id')
                             ->label(__('advance_requests.fields.ledger_entry_id'))
-                            ->options(fn (): array => LedgerEntry::query()
+                            ->options(fn(): array => LedgerEntry::query()
                                 ->orderByDesc('date')
                                 ->limit(50)
                                 ->get()
                                 ->mapWithKeys(
-                                    fn (LedgerEntry $entry): array => [
+                                    fn(LedgerEntry $entry): array => [
                                         $entry->id => trim("{$entry->description} ({$entry->amount} SAR)"),
                                     ]
                                 )
@@ -181,7 +181,7 @@ class AdvanceRequestTable
                     ->label(__('advance_requests.actions.reject'))
                     ->icon(Heroicon::OutlinedXCircle)
                     ->color('danger')
-                    ->visible(fn (AdvanceRequest $record): bool => $record->status === 'pending')
+                    ->visible(fn(AdvanceRequest $record): bool => $record->status === 'pending')
                     ->schema([
                         Textarea::make('rejection_reason')
                             ->label(__('advance_requests.fields.rejection_reason'))
@@ -209,7 +209,7 @@ class AdvanceRequestTable
                     ->label(__('advance_requests.actions.cancel'))
                     ->icon(Heroicon::OutlinedNoSymbol)
                     ->color('gray')
-                    ->visible(fn (AdvanceRequest $record): bool => $record->status === 'pending')
+                    ->visible(fn(AdvanceRequest $record): bool => $record->status === 'pending')
                     ->schema([
                         Textarea::make('decision_notes')
                             ->label(__('advance_requests.fields.decision_notes'))

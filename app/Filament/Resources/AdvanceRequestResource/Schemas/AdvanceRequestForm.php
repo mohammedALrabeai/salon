@@ -30,12 +30,12 @@ class AdvanceRequestForm
                             ->required()
                             ->live()
                             ->afterStateUpdated(function (Set $set): void {
-                                $set('employee_id', null);
+                                $set('user_id', null);
                             }),
-                        Select::make('employee_id')
-                            ->label(__('advance_requests.fields.employee_id'))
+                        Select::make('user_id')
+                            ->label(__('advance_requests.fields.user_id'))
                             ->relationship(
-                                name: 'employee',
+                                name: 'user',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: fn($query, Get $get) => $query->when(
                                     $get('branch_id'),

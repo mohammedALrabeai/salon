@@ -20,7 +20,7 @@ class ReportController extends ApiController
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
             'branch_id' => ['nullable', 'uuid'],
-            'employee_id' => ['nullable', 'uuid'],
+            'user_id' => ['nullable', 'uuid'],
             'group_by' => ['nullable', 'string'],
         ]);
 
@@ -32,8 +32,8 @@ class ReportController extends ApiController
             $query->where('branch_id', $data['branch_id']);
         }
 
-        if (!empty($data['employee_id'])) {
-            $query->where('employee_id', $data['employee_id']);
+        if (!empty($data['user_id'])) {
+            $query->where('user_id', $data['user_id']);
         }
 
         $summary = (clone $query)
@@ -53,17 +53,17 @@ class ReportController extends ApiController
         $chartData = $this->salesChartData($query, $groupBy);
 
         $topEmployees = (clone $query)
-            ->select('employee_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'), DB::raw('COALESCE(SUM(commission), 0) as total_commission'), DB::raw('COUNT(*) as entries_count'))
-            ->groupBy('employee_id')
+            ->select('user_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'), DB::raw('COALESCE(SUM(commission), 0) as total_commission'), DB::raw('COUNT(*) as entries_count'))
+            ->groupBy('user_id')
             ->orderByDesc('total_sales')
             ->limit(5)
             ->get()
             ->map(function ($row) {
-                $employee = User::query()->find($row->employee_id);
+                $user = User::query()->find($row->user_id);
 
                 return [
-                    'employee_id' => $row->employee_id,
-                    'name' => $employee?->name,
+                    'user_id' => $row->user_id,
+                    'name' => $user?->name,
                     'sales' => (float) $row->total_sales,
                     'commission' => (float) $row->total_commission,
                     'entries' => (int) $row->entries_count,
@@ -120,7 +120,7 @@ class ReportController extends ApiController
         ]);
     }
 
-    public function employees(Request $request)
+    public function users(Request $request)
     {
         $this->requirePermission('ViewAny:Employee');
 
@@ -140,27 +140,27 @@ class ReportController extends ApiController
         }
 
         $rows = $query
-            ->select('employee_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'), DB::raw('COALESCE(SUM(commission), 0) as total_commission'), DB::raw('COALESCE(SUM(bonus), 0) as total_bonus'), DB::raw('COUNT(*) as entries_count'))
-            ->groupBy('employee_id')
+            ->select('user_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'), DB::raw('COALESCE(SUM(commission), 0) as total_commission'), DB::raw('COALESCE(SUM(bonus), 0) as total_bonus'), DB::raw('COUNT(*) as entries_count'))
+            ->groupBy('user_id')
             ->get();
 
-        $employeeIds = $rows->pluck('employee_id')->all();
-        $employees = User::query()->whereIn('id', $employeeIds)->get()->keyBy('id');
+        $userIds = $rows->pluck('user_id')->all();
+        $users = User::query()->whereIn('id', $userIds)->get()->keyBy('id');
 
-        $bestDays = $this->bestDaysByEmployee($from, $to, $employeeIds);
+        $bestDays = $this->bestDaysByEmployee($from, $to, $userIds);
 
-        $items = $rows->map(function ($row) use ($employees, $bestDays) {
-            $employee = $employees->get($row->employee_id);
+        $items = $rows->map(function ($row) use ($users, $bestDays) {
+            $user = $users->get($row->user_id);
             $totalEarnings = (float) $row->total_commission + (float) $row->total_bonus;
             $workingDays = (int) $row->entries_count;
             $avgDailySales = $workingDays > 0 ? (float) $row->total_sales / $workingDays : 0.0;
-            $bestDay = $bestDays[$row->employee_id] ?? null;
+            $bestDay = $bestDays[$row->user_id] ?? null;
 
             return [
-                'employee' => [
-                    'id' => $row->employee_id,
-                    'name' => $employee?->name,
-                    'role' => $employee?->role,
+                'user' => [
+                    'id' => $row->user_id,
+                    'name' => $user?->name,
+                    'role' => $user?->role,
                 ],
                 'stats' => [
                     'total_sales' => (float) $row->total_sales,
@@ -204,7 +204,7 @@ class ReportController extends ApiController
 
         $rows = DailyEntry::query()
             ->whereBetween('date', [$from, $to])
-            ->select('branch_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'), DB::raw('COALESCE(SUM(net), 0) as total_net'), DB::raw('COUNT(*) as entries_count'), DB::raw('COUNT(DISTINCT employee_id) as employees_count'))
+            ->select('branch_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'), DB::raw('COALESCE(SUM(net), 0) as total_net'), DB::raw('COUNT(*) as entries_count'), DB::raw('COUNT(DISTINCT user_id) as employees_count'))
             ->groupBy('branch_id')
             ->get();
 
@@ -265,7 +265,7 @@ class ReportController extends ApiController
         $partyIds = $rows->pluck('party_id')->all();
         $parties = [];
 
-        if ($data['party_type'] === 'employee') {
+        if ($data['party_type'] === 'user') {
             $parties = User::query()->whereIn('id', $partyIds)->get()->keyBy('id');
         } elseif ($data['party_type'] === 'branch') {
             $parties = Branch::query()->whereIn('id', $partyIds)->get()->keyBy('id');
@@ -353,25 +353,25 @@ class ReportController extends ApiController
         })->values()->all();
     }
 
-    private function bestDaysByEmployee(string $from, string $to, array $employeeIds): array
+    private function bestDaysByEmployee(string $from, string $to, array $userIds): array
     {
-        if (empty($employeeIds)) {
+        if (empty($userIds)) {
             return [];
         }
 
         $rows = DailyEntry::query()
             ->whereBetween('date', [$from, $to])
-            ->whereIn('employee_id', $employeeIds)
-            ->select('employee_id', 'date', DB::raw('COALESCE(SUM(sales), 0) as total_sales'))
-            ->groupBy('employee_id', 'date')
+            ->whereIn('user_id', $userIds)
+            ->select('user_id', 'date', DB::raw('COALESCE(SUM(sales), 0) as total_sales'))
+            ->groupBy('user_id', 'date')
             ->get();
 
         $bestDays = [];
 
         foreach ($rows as $row) {
-            $current = $bestDays[$row->employee_id] ?? null;
+            $current = $bestDays[$row->user_id] ?? null;
             if (!$current || $row->total_sales > $current['sales']) {
-                $bestDays[$row->employee_id] = [
+                $bestDays[$row->user_id] = [
                     'date' => $row->date?->toDateString(),
                     'sales' => (float) $row->total_sales,
                 ];

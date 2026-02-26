@@ -71,7 +71,7 @@ class DocumentController extends ApiController
         $this->requirePermission('Create:Document');
 
         $data = $request->validate([
-            'owner_type' => ['required', 'string', Rule::in(['employee', 'branch', 'company'])],
+            'owner_type' => ['required', 'string', Rule::in(['user', 'branch', 'company'])],
             'owner_id' => ['required', 'uuid'],
             'type' => ['required', 'string', 'max:50'],
             'number' => ['nullable', 'string', 'max:50'],
@@ -84,7 +84,7 @@ class DocumentController extends ApiController
             'files.*' => ['file', 'max:5120'],
         ]);
 
-        if ($data['owner_type'] === 'employee' && !User::query()->whereKey($data['owner_id'])->whereIn('role', User::employeeRoles())->exists()) {
+        if ($data['owner_type'] === 'user' && !User::query()->whereKey($data['owner_id'])->exists()) {
             return $this->error('VALIDATION_ERROR', 'المالك غير موجود', 422);
         }
 
@@ -240,22 +240,22 @@ class DocumentController extends ApiController
 
     private function resolveOwners($documents): array
     {
-        $employeeIds = $documents->where('owner_type', 'employee')->pluck('owner_id')->unique()->all();
+        $userIds = $documents->where('owner_type', 'user')->pluck('owner_id')->unique()->all();
         $branchIds = $documents->where('owner_type', 'branch')->pluck('owner_id')->unique()->all();
 
-        $employees = User::query()->whereIn('id', $employeeIds)->get()->keyBy('id');
+        $users = User::query()->whereIn('id', $userIds)->get()->keyBy('id');
         $branches = Branch::query()->whereIn('id', $branchIds)->get()->keyBy('id');
 
         $owners = [
-            'employee' => [],
+            'user' => [],
             'branch' => [],
             'company' => [],
         ];
 
-        foreach ($employees as $employee) {
-            $owners['employee'][$employee->id] = [
-                'id' => $employee->id,
-                'name' => $employee->name,
+        foreach ($users as $user) {
+            $owners['user'][$user->id] = [
+                'id' => $user->id,
+                'name' => $user->name,
             ];
         }
 

@@ -91,7 +91,7 @@ class LedgerEntryController extends ApiController
         $this->requirePermission('Create:LedgerEntry');
 
         $data = $request->validate([
-            'party_type' => ['required', 'string', 'in:employee,branch,supplier,customer'],
+            'party_type' => ['required', 'string', 'in:user,branch,supplier,customer'],
             'party_id' => ['required', 'uuid'],
             'date' => ['required', 'date'],
             'type' => ['required', 'string', 'in:debit,credit'],
@@ -101,7 +101,7 @@ class LedgerEntryController extends ApiController
             'payment_method' => ['nullable', 'string', 'in:cash,bank_transfer,check,other'],
         ]);
 
-        if ($data['party_type'] === 'employee' && !User::query()->whereKey($data['party_id'])->whereIn('role', User::employeeRoles())->exists()) {
+        if ($data['party_type'] === 'user' && !User::query()->whereKey($data['party_id'])->exists()) {
             return $this->error('VALIDATION_ERROR', 'الطرف غير موجود', 422);
         }
 
@@ -140,7 +140,7 @@ class LedgerEntryController extends ApiController
     {
         $this->requirePermission('ViewAny:LedgerEntry');
 
-        if (!in_array($party_type, ['employee', 'branch', 'supplier', 'customer'], true)) {
+        if (!in_array($party_type, ['user', 'branch', 'supplier', 'customer'], true)) {
             return $this->error('VALIDATION_ERROR', 'نوع الطرف غير صالح', 422);
         }
 
@@ -161,21 +161,21 @@ class LedgerEntryController extends ApiController
 
     private function resolveParties($entries): array
     {
-        $employeeIds = $entries->where('party_type', 'employee')->pluck('party_id')->unique()->all();
+        $userIds = $entries->where('party_type', 'user')->pluck('party_id')->unique()->all();
         $branchIds = $entries->where('party_type', 'branch')->pluck('party_id')->unique()->all();
 
-        $employees = User::query()->whereIn('id', $employeeIds)->get()->keyBy('id');
+        $users = User::query()->whereIn('id', $userIds)->get()->keyBy('id');
         $branches = Branch::query()->whereIn('id', $branchIds)->get()->keyBy('id');
 
         $partyMap = [
-            'employee' => [],
+            'user' => [],
             'branch' => [],
         ];
 
-        foreach ($employees as $employee) {
-            $partyMap['employee'][$employee->id] = [
-                'id' => $employee->id,
-                'name' => $employee->name,
+        foreach ($users as $user) {
+            $partyMap['user'][$user->id] = [
+                'id' => $user->id,
+                'name' => $user->name,
             ];
         }
 
@@ -204,9 +204,9 @@ class LedgerEntryController extends ApiController
 
         $party = null;
 
-        if ($partyType === 'employee') {
-            $employee = User::query()->find($partyId);
-            $party = $employee ? ['id' => $employee->id, 'name' => $employee->name] : null;
+        if ($partyType === 'user') {
+            $user = User::query()->find($partyId);
+            $party = $user ? ['id' => $user->id, 'name' => $user->name] : null;
         } elseif ($partyType === 'branch') {
             $branch = Branch::query()->find($partyId);
             $party = $branch ? ['id' => $branch->id, 'name' => $branch->name] : null;

@@ -38,7 +38,7 @@ Route::prefix('v1')->group(function () {
         Route::get('daily-entries/{dailyEntry}', [DailyEntryController::class, 'show']);
         Route::put('daily-entries/{dailyEntry}', [DailyEntryController::class, 'update']);
         Route::delete('daily-entries/{dailyEntry}', [DailyEntryController::class, 'destroy']);
-        Route::get('daily-entries/stats/employee/{employee}', [DailyEntryController::class, 'employeeStats']);
+        Route::get('daily-entries/stats/user/{user}', [DailyEntryController::class, 'userStats']);
 
         Route::get('day-closures', [DayClosureController::class, 'index']);
         Route::post('day-closures', [DayClosureController::class, 'store']);
@@ -65,7 +65,7 @@ Route::prefix('v1')->group(function () {
         Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
 
         Route::get('reports/sales', [ReportController::class, 'sales']);
-        Route::get('reports/employees', [ReportController::class, 'employees']);
+        Route::get('reports/users', [ReportController::class, 'users']);
         Route::get('reports/branches', [ReportController::class, 'branches']);
         Route::get('reports/ledger', [ReportController::class, 'ledger']);
 

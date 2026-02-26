@@ -521,7 +521,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/daily-entries?employee_id={{employee_id}}&date_from=2025-12-01&date_to=2025-12-31",
+              "raw": "{{baseUrl}}/daily-entries?user_id={{user_id}}&date_from=2025-12-01&date_to=2025-12-31",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -530,8 +530,8 @@
               ],
               "query": [
                 {
-                  "key": "employee_id",
-                  "value": "{{employee_id}}"
+                  "key": "user_id",
+                  "value": "{{user_id}}"
                 },
                 {
                   "key": "date_from",
@@ -562,7 +562,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"branch_id\": \"{{branch_id}}\",\n  \"date\": \"2025-12-22\",\n  \"sales\": 1500.0,\n  \"cash\": 500.0,\n  \"expense\": 100.0,\n  \"commission_rate\": 50.0,\n  \"bonus\": 50.0,\n  \"bonus_reason\": \"Great performance\",\n  \"note\": \"Good day\",\n  \"transactions_count\": 8\n}"
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"branch_id\": \"{{branch_id}}\",\n  \"date\": \"2025-12-22\",\n  \"sales\": 1500.0,\n  \"cash\": 500.0,\n  \"expense\": 100.0,\n  \"commission_rate\": 50.0,\n  \"bonus\": 50.0,\n  \"bonus_reason\": \"Great performance\",\n  \"note\": \"Good day\",\n  \"transactions_count\": 8\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/daily-entries",
@@ -664,15 +664,15 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/daily-entries/stats/employee/{{employee_id}}?date_from=2025-12-01&date_to=2025-12-31",
+              "raw": "{{baseUrl}}/daily-entries/stats/user/{{user_id}}?date_from=2025-12-01&date_to=2025-12-31",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "daily-entries",
                 "stats",
-                "employee",
-                "{{employee_id}}"
+                "user",
+                "{{user_id}}"
               ],
               "query": [
                 {
@@ -822,7 +822,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/ledger-entries?party_type=employee&party_id={{employee_id}}&date_from=2025-12-01&date_to=2025-12-31",
+              "raw": "{{baseUrl}}/ledger-entries?party_type=employee&party_id={{user_id}}&date_from=2025-12-01&date_to=2025-12-31",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -832,11 +832,11 @@
               "query": [
                 {
                   "key": "party_type",
-                  "value": "employee"
+                  "value": "user"
                 },
                 {
                   "key": "party_id",
-                  "value": "{{employee_id}}"
+                  "value": "{{user_id}}"
                 },
                 {
                   "key": "date_from",
@@ -867,7 +867,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"party_type\": \"employee\",\n  \"party_id\": \"{{employee_id}}\",\n  \"date\": \"2025-12-22\",\n  \"type\": \"credit\",\n  \"amount\": 1000.0,\n  \"description\": \"Salary payment\",\n  \"category\": \"salary\",\n  \"payment_method\": \"bank_transfer\"\n}"
+              "raw": "{\n  \"party_type\": \"employee\",\n  \"party_id\": \"{{user_id}}\",\n  \"date\": \"2025-12-22\",\n  \"type\": \"credit\",\n  \"amount\": 1000.0,\n  \"description\": \"Salary payment\",\n  \"category\": \"salary\",\n  \"payment_method\": \"bank_transfer\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/ledger-entries",
@@ -922,7 +922,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/advance-requests?employee_id={{employee_id}}&status=pending",
+              "raw": "{{baseUrl}}/advance-requests?user_id={{user_id}}&status=pending",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -931,8 +931,8 @@
               ],
               "query": [
                 {
-                  "key": "employee_id",
-                  "value": "{{employee_id}}"
+                  "key": "user_id",
+                  "value": "{{user_id}}"
                 },
                 {
                   "key": "status",
@@ -959,7 +959,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"amount\": 500.0,\n  \"reason\": \"Emergency\",\n  \"attachment\": \"BASE64_IMAGE_DATA\"\n}"
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"amount\": 500.0,\n  \"reason\": \"Emergency\",\n  \"attachment\": \"BASE64_IMAGE_DATA\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/advance-requests",
@@ -1382,7 +1382,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/reports/employees?date_from=2025-12-01&date_to=2025-12-31",
+              "raw": "{{baseUrl}}/reports/users?date_from=2025-12-01&date_to=2025-12-31",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1459,7 +1459,7 @@
               "query": [
                 {
                   "key": "party_type",
-                  "value": "employee"
+                  "value": "user"
                 },
                 {
                   "key": "date_from",
@@ -1623,7 +1623,7 @@
       "value": "YOUR_MANAGER_ID"
     },
     {
-      "key": "employee_id",
+      "key": "user_id",
       "value": "YOUR_EMPLOYEE_ID"
     },
     {
@@ -1636,7 +1636,7 @@
     },
     {
       "key": "ledger_party_type",
-      "value": "employee"
+      "value": "user"
     },
     {
       "key": "ledger_party_id",
@@ -1652,7 +1652,7 @@
     },
     {
       "key": "document_owner_type",
-      "value": "employee"
+      "value": "user"
     },
     {
       "key": "document_owner_id",

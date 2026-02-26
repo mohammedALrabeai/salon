@@ -17,10 +17,10 @@ class AdvanceRequestController extends ApiController
     {
         $this->requirePermission('ViewAny:AdvanceRequest');
 
-        $query = AdvanceRequest::query()->with(['employee', 'branch']);
+        $query = AdvanceRequest::query()->with(['user', 'branch']);
 
-        if ($request->filled('employee_id')) {
-            $query->where('employee_id', $request->string('employee_id'));
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->string('user_id'));
         }
 
         if ($request->filled('branch_id')) {
@@ -44,10 +44,10 @@ class AdvanceRequestController extends ApiController
         $items = $paginator->getCollection()->map(function (AdvanceRequest $requestModel) {
             return [
                 'id' => $requestModel->id,
-                'employee' => $requestModel->employee ? [
-                    'id' => $requestModel->employee->id,
-                    'name' => $requestModel->employee->name,
-                    'phone' => $requestModel->employee->phone,
+                'user' => $requestModel->user ? [
+                    'id' => $requestModel->user->id,
+                    'name' => $requestModel->user->name,
+                    'phone' => $requestModel->user->phone,
                 ] : null,
                 'branch' => $requestModel->branch ? [
                     'id' => $requestModel->branch->id,
@@ -72,7 +72,7 @@ class AdvanceRequestController extends ApiController
             'amount' => ['required', 'numeric', 'min:1'],
             'reason' => ['nullable', 'string'],
             'attachment' => ['nullable', 'string'],
-            'employee_id' => [
+            'user_id' => [
                 'nullable',
                 'uuid',
                 Rule::exists('users', 'id')->where(fn($query) => $query->whereIn('role', User::employeeRoles())),
@@ -81,8 +81,8 @@ class AdvanceRequestController extends ApiController
 
         $employee = null;
 
-        if (!empty($data['employee_id'])) {
-            $employee = User::query()->find($data['employee_id']);
+        if (!empty($data['user_id'])) {
+            $employee = User::query()->find($data['user_id']);
         } else {
             $employee = User::query()->where('phone', $request->user()->phone)->first();
         }
@@ -101,7 +101,7 @@ class AdvanceRequestController extends ApiController
         }
 
         $advance = AdvanceRequest::create([
-            'employee_id' => $employee->id,
+            'user_id' => $employee->id,
             'branch_id' => $employee->branch_id,
             'amount' => $data['amount'],
             'reason' => $data['reason'] ?? null,
@@ -134,8 +134,8 @@ class AdvanceRequestController extends ApiController
 
         $ledger = DB::transaction(function () use ($advanceRequest, $data, $request) {
             $entry = LedgerEntry::create([
-                'party_type' => 'employee',
-                'party_id' => $advanceRequest->employee_id,
+                'party_type' => 'user',
+                'party_id' => $advanceRequest->user_id,
                 'date' => $data['payment_date'] ?? now()->toDateString(),
                 'type' => 'debit',
                 'amount' => $advanceRequest->amount,

@@ -15,10 +15,10 @@ class DailyEntryController extends ApiController
     {
         $this->requirePermission('ViewAny:DailyEntry');
 
-        $query = DailyEntry::query()->with(['employee', 'branch']);
+        $query = DailyEntry::query()->with(['user', 'branch']);
 
-        if ($request->filled('employee_id')) {
-            $query->where('employee_id', $request->string('employee_id'));
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->string('user_id'));
         }
 
         if ($request->filled('branch_id')) {
@@ -53,9 +53,9 @@ class DailyEntryController extends ApiController
             return [
                 'id' => $entry->id,
                 'date' => $entry->date?->toDateString(),
-                'employee' => $entry->employee ? [
-                    'id' => $entry->employee->id,
-                    'name' => $entry->employee->name,
+                'user' => $entry->user ? [
+                    'id' => $entry->user->id,
+                    'name' => $entry->user->name,
                 ] : null,
                 'branch' => $entry->branch ? [
                     'id' => $entry->branch->id,
@@ -94,7 +94,7 @@ class DailyEntryController extends ApiController
         $this->requirePermission('Create:DailyEntry');
 
         $data = $request->validate([
-            'employee_id' => [
+            'user_id' => [
                 'required',
                 'uuid',
                 Rule::exists('users', 'id')->where(fn($query) => $query->whereIn('role', User::employeeRoles())),
@@ -123,7 +123,7 @@ class DailyEntryController extends ApiController
         }
 
         $existing = DailyEntry::query()
-            ->where('employee_id', $data['employee_id'])
+            ->where('user_id', $data['user_id'])
             ->whereDate('date', $data['date'])
             ->first();
 
@@ -131,11 +131,11 @@ class DailyEntryController extends ApiController
             return $this->error('DUPLICATE_ENTRY', 'يوجد إدخال مسجل لهذا الموظف في هذا التاريخ', 409, [
                 'existing_entry_id' => $existing->id,
                 'date' => $data['date'],
-                'employee_id' => $data['employee_id'],
+                'user_id' => $data['user_id'],
             ]);
         }
 
-        $employee = User::query()->find($data['employee_id']);
+        $employee = User::query()->find($data['user_id']);
 
         if ($employee && $employee->branch_id !== $data['branch_id']) {
             return $this->error('VALIDATION_ERROR', 'الموظف غير تابع لهذا الفرع', 422);
@@ -145,7 +145,7 @@ class DailyEntryController extends ApiController
         $commission = round($sales * ((float) $commissionRate) / 100, 2);
 
         $entry = DailyEntry::create([
-            'employee_id' => $data['employee_id'],
+            'user_id' => $data['user_id'],
             'branch_id' => $data['branch_id'],
             'date' => $data['date'],
             'sales' => $sales,
@@ -183,18 +183,18 @@ class DailyEntryController extends ApiController
     {
         $this->requirePermission('View:DailyEntry');
 
-        $dailyEntry->load(['employee', 'branch', 'createdBy']);
+        $dailyEntry->load(['user', 'branch', 'createdBy']);
 
         $totalEarnings = $dailyEntry->commission + $dailyEntry->bonus;
 
         return $this->success([
             'id' => $dailyEntry->id,
             'date' => $dailyEntry->date?->toDateString(),
-            'employee' => $dailyEntry->employee ? [
-                'id' => $dailyEntry->employee->id,
-                'name' => $dailyEntry->employee->name,
-                'phone' => $dailyEntry->employee->phone,
-                'commission_rate' => (float) $dailyEntry->employee->commission_rate,
+            'user' => $dailyEntry->user ? [
+                'id' => $dailyEntry->user->id,
+                'name' => $dailyEntry->user->name,
+                'phone' => $dailyEntry->user->phone,
+                'commission_rate' => (float) $dailyEntry->user->commission_rate,
             ] : null,
             'branch' => $dailyEntry->branch ? [
                 'id' => $dailyEntry->branch->id,
@@ -320,7 +320,7 @@ class DailyEntryController extends ApiController
         return $this->success(null, 'تم حذف الإدخال بنجاح');
     }
 
-    public function employeeStats(Request $request, User $employee)
+    public function userStats(Request $request, User $user)
     {
         $this->requirePermission('ViewAny:DailyEntry');
 
@@ -333,7 +333,7 @@ class DailyEntryController extends ApiController
         $dateTo = $data['date_to'] ?? now()->toDateString();
 
         $entries = DailyEntry::query()
-            ->where('employee_id', $employee->id)
+            ->where('user_id', $user->id)
             ->whereBetween('date', [$dateFrom, $dateTo])
             ->orderBy('date')
             ->get();
@@ -382,9 +382,9 @@ class DailyEntryController extends ApiController
         }
 
         return $this->success([
-            'employee' => [
-                'id' => $employee->id,
-                'name' => $employee->name,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
             ],
             'period' => [
                 'from' => $dateFrom,
