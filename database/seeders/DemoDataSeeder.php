@@ -10,7 +10,7 @@ use App\Models\DailyEntry;
 use App\Models\DayClosure;
 use App\Models\Document;
 use App\Models\DocumentFile;
-use App\Models\Employee;
+
 use App\Models\LedgerEntry;
 use App\Models\Notification;
 use App\Models\User;
@@ -144,7 +144,7 @@ class DemoDataSeeder extends Seeder
             $usersByRole['receptionist']->update(['branch_id' => $branchNorth->id]);
         }
 
-        $employeeAhmed = Employee::updateOrCreate(
+        $employeeAhmed = User::updateOrCreate(
             ['phone' => '0501111111'],
             [
                 'branch_id' => $branchMain->id,
@@ -164,7 +164,7 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
-        $employeeSami = Employee::updateOrCreate(
+        $employeeSami = User::updateOrCreate(
             ['phone' => '0501111112'],
             [
                 'branch_id' => $branchMain->id,
@@ -184,7 +184,7 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
-        $employeeMona = Employee::updateOrCreate(
+        $employeeMona = User::updateOrCreate(
             ['phone' => '0501111113'],
             [
                 'branch_id' => $branchMain->id,
@@ -204,7 +204,7 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
-        $employeeNasser = Employee::updateOrCreate(
+        $employeeNasser = User::updateOrCreate(
             ['phone' => '0501111114'],
             [
                 'branch_id' => $branchNorth->id,
@@ -230,14 +230,14 @@ class DemoDataSeeder extends Seeder
             $now->copy()->toDateString(),
         ];
 
-        $createEntry = function (Employee $employee, string $date, float $sales, float $cash, float $expense, int $transactions, bool $locked = false) use ($adminId) {
+        $createEntry = function (User $employee, string $date, float $sales, float $cash, float $expense, int $transactions, bool $locked = false) use ($adminId) {
             $commissionRate = (float) ($employee->commission_rate ?? 0);
             $commission = round($sales * $commissionRate / 100, 2);
             $bonus = $sales >= 1200 ? 75 : 0;
 
             DailyEntry::updateOrCreate(
                 [
-                    'employee_id' => $employee->id,
+                    'user_id' => $employee->id,
                     'date' => $date,
                 ],
                 [
@@ -261,10 +261,10 @@ class DemoDataSeeder extends Seeder
         };
 
         $createEntry($employeeAhmed, $entryDates[0], 1350, 180, 120, 18, true);
-        $createEntry($employeeAhmed, $entryDates[1], 980, 120, 80, 14);
-        $createEntry($employeeSami, $entryDates[1], 760, 90, 60, 11);
-        $createEntry($employeeSami, $entryDates[2], 1120, 140, 100, 16);
-        $createEntry($employeeNasser, $entryDates[1], 690, 80, 40, 9);
+        $createEntry($employeeAhmed, $entryDates[1], 980, 120, 80, 14, false);
+        $createEntry($employeeSami, $entryDates[1], 760, 90, 60, 11, false);
+        $createEntry($employeeSami, $entryDates[2], 1120, 140, 100, 16, false);
+        $createEntry($employeeNasser, $entryDates[1], 690, 80, 40, 9, false);
 
         $closureDate = $entryDates[1];
         $branchEntries = DailyEntry::query()
@@ -280,7 +280,7 @@ class DemoDataSeeder extends Seeder
             $totalCommission = $branchEntries->sum('commission');
             $totalBonus = $branchEntries->sum('bonus');
             $entriesCount = $branchEntries->count();
-            $employeesCount = $branchEntries->pluck('employee_id')->unique()->count();
+            $employeesCount = $branchEntries->pluck('user_id')->unique()->count();
 
             DayClosure::updateOrCreate(
                 [
@@ -350,7 +350,7 @@ class DemoDataSeeder extends Seeder
 
         AdvanceRequest::updateOrCreate(
             [
-                'employee_id' => $employeeAhmed->id,
+                'user_id' => $employeeAhmed->id,
                 'requested_at' => $pendingRequestedAt,
             ],
             [
@@ -363,7 +363,7 @@ class DemoDataSeeder extends Seeder
 
         AdvanceRequest::updateOrCreate(
             [
-                'employee_id' => $employeeSami->id,
+                'user_id' => $employeeSami->id,
                 'requested_at' => $approvedRequestedAt,
             ],
             [
@@ -544,7 +544,7 @@ class DemoDataSeeder extends Seeder
             $totalCommission = $systemTotals->sum('commission');
             $totalBonus = $systemTotals->sum('bonus');
             $entriesCount = $systemTotals->count();
-            $employeesCount = $systemTotals->pluck('employee_id')->unique()->count();
+            $employeesCount = $systemTotals->pluck('user_id')->unique()->count();
             $transactionsCount = (int) $systemTotals->sum('transactions_count');
 
             AnalyticsDaily::updateOrCreate(
@@ -584,7 +584,7 @@ class DemoDataSeeder extends Seeder
                 'total_commission' => $branchEntries->sum('commission'),
                 'total_bonus' => $branchEntries->sum('bonus'),
                 'entries_count' => $branchEntries->count(),
-                'employees_count' => $branchEntries->pluck('employee_id')->unique()->count(),
+                'employees_count' => $branchEntries->pluck('user_id')->unique()->count(),
                 'transactions_count' => (int) $branchEntries->sum('transactions_count'),
                 'avg_sale_value' => $branchEntries->count() > 0 ? round($branchEntries->sum('sales') / $branchEntries->count(), 2) : null,
                 'avg_commission_rate' => $branchEntries->sum('sales') > 0 ? round(($branchEntries->sum('commission') / $branchEntries->sum('sales')) * 100, 2) : null,
@@ -595,7 +595,7 @@ class DemoDataSeeder extends Seeder
         AnalyticsDaily::updateOrCreate(
             [
                 'date' => $closureDate,
-                'scope_type' => 'employee',
+                'scope_type' => 'user',
                 'scope_id' => $employeeAhmed->id,
             ],
             [

@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\LedgerEntryResource\Schemas;
 
 use App\Models\Branch;
-use App\Models\Employee;
+use App\Models\User;
 use App\Models\LedgerEntry;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -37,18 +37,18 @@ class LedgerEntryTable
                 TextColumn::make('party_type')
                     ->label(__('ledger_entries.fields.party_type'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::partyTypeLabel($state))
-                    ->color(fn (?string $state): string => self::partyTypeColor($state))
+                    ->formatStateUsing(fn(?string $state): string => self::partyTypeLabel($state))
+                    ->color(fn(?string $state): string => self::partyTypeColor($state))
                     ->toggleable(),
                 TextColumn::make('party_id')
                     ->label(__('ledger_entries.fields.party'))
-                    ->formatStateUsing(fn (?string $state, LedgerEntry $record): string => self::resolvePartyLabel($record))
+                    ->formatStateUsing(fn(?string $state, LedgerEntry $record): string => self::resolvePartyLabel($record))
                     ->toggleable(),
                 TextColumn::make('type')
                     ->label(__('ledger_entries.fields.type'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::typeLabel($state))
-                    ->color(fn (?string $state): string => self::typeColor($state))
+                    ->formatStateUsing(fn(?string $state): string => self::typeLabel($state))
+                    ->color(fn(?string $state): string => self::typeColor($state))
                     ->sortable(),
                 TextColumn::make('amount')
                     ->label(__('ledger_entries.fields.amount'))
@@ -63,17 +63,17 @@ class LedgerEntryTable
                 TextColumn::make('source')
                     ->label(__('ledger_entries.fields.source'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state))
+                    ->formatStateUsing(fn(?string $state): string => self::sourceLabel($state))
                     ->toggleable(),
                 TextColumn::make('status')
                     ->label(__('ledger_entries.fields.status'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::statusLabel($state))
-                    ->color(fn (?string $state): string => self::statusColor($state))
+                    ->formatStateUsing(fn(?string $state): string => self::statusLabel($state))
+                    ->color(fn(?string $state): string => self::statusColor($state))
                     ->toggleable(),
                 TextColumn::make('payment_method')
                     ->label(__('ledger_entries.fields.payment_method'))
-                    ->formatStateUsing(fn (?string $state): string => self::paymentMethodLabel($state))
+                    ->formatStateUsing(fn(?string $state): string => self::paymentMethodLabel($state))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('category')
                     ->label(__('ledger_entries.fields.category'))
@@ -126,11 +126,11 @@ class LedgerEntryTable
                         return $query
                             ->when(
                                 $data['from'] ?? null,
-                                fn (Builder $query, $date): Builder => $query->whereDate('date', '>=', $date)
+                                fn(Builder $query, $date): Builder => $query->whereDate('date', '>=', $date)
                             )
                             ->when(
                                 $data['until'] ?? null,
-                                fn (Builder $query, $date): Builder => $query->whereDate('date', '<=', $date)
+                                fn(Builder $query, $date): Builder => $query->whereDate('date', '<=', $date)
                             );
                     }),
                 TrashedFilter::make(),
@@ -140,23 +140,23 @@ class LedgerEntryTable
                     ->label(__('ledger_entries.actions.mark_confirmed'))
                     ->icon(Heroicon::OutlinedCheckCircle)
                     ->color('success')
-                    ->visible(fn (LedgerEntry $record): bool => $record->status !== 'confirmed')
+                    ->visible(fn(LedgerEntry $record): bool => $record->status !== 'confirmed')
                     ->requiresConfirmation()
-                    ->action(fn (LedgerEntry $record) => self::updateStatus($record, 'confirmed')),
+                    ->action(fn(LedgerEntry $record) => self::updateStatus($record, 'confirmed')),
                 Action::make('mark_pending')
                     ->label(__('ledger_entries.actions.mark_pending'))
                     ->icon(Heroicon::OutlinedClock)
                     ->color('warning')
-                    ->visible(fn (LedgerEntry $record): bool => $record->status !== 'pending')
+                    ->visible(fn(LedgerEntry $record): bool => $record->status !== 'pending')
                     ->requiresConfirmation()
-                    ->action(fn (LedgerEntry $record) => self::updateStatus($record, 'pending')),
+                    ->action(fn(LedgerEntry $record) => self::updateStatus($record, 'pending')),
                 Action::make('mark_cancelled')
                     ->label(__('ledger_entries.actions.mark_cancelled'))
                     ->icon(Heroicon::OutlinedNoSymbol)
                     ->color('gray')
-                    ->visible(fn (LedgerEntry $record): bool => $record->status !== 'cancelled')
+                    ->visible(fn(LedgerEntry $record): bool => $record->status !== 'cancelled')
                     ->requiresConfirmation()
-                    ->action(fn (LedgerEntry $record) => self::updateStatus($record, 'cancelled')),
+                    ->action(fn(LedgerEntry $record) => self::updateStatus($record, 'cancelled')),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
@@ -305,7 +305,7 @@ class LedgerEntryTable
     private static function resolvePartyLabel(LedgerEntry $record): string
     {
         if ($record->party_type === 'employee') {
-            $employee = Employee::query()->select('name', 'phone')->find($record->party_id);
+            $employee = User::query()->select('name', 'phone')->find($record->party_id);
 
             if ($employee) {
                 return trim("{$employee->name} ({$employee->phone})");

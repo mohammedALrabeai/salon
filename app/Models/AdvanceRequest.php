@@ -14,7 +14,7 @@ class AdvanceRequest extends Model
     use HasFactory, HasUuids, LogsModelActivity, SoftDeletes;
 
     protected $fillable = [
-        'employee_id',
+        'user_id',
         'branch_id',
         'amount',
         'reason',

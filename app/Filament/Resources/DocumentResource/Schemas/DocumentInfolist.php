@@ -4,7 +4,7 @@ namespace App\Filament\Resources\DocumentResource\Schemas;
 
 use App\Models\Branch;
 use App\Models\Document;
-use App\Models\Employee;
+use App\Models\User;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -20,11 +20,11 @@ class DocumentInfolist
                         TextEntry::make('owner_type')
                             ->label(__('documents.fields.owner_type'))
                             ->badge()
-                            ->formatStateUsing(fn (?string $state): string => self::ownerTypeLabel($state))
-                            ->color(fn (?string $state): string => self::ownerTypeColor($state)),
+                            ->formatStateUsing(fn(?string $state): string => self::ownerTypeLabel($state))
+                            ->color(fn(?string $state): string => self::ownerTypeColor($state)),
                         TextEntry::make('owner_id')
                             ->label(__('documents.fields.owner'))
-                            ->formatStateUsing(fn (?string $state, Document $record): string => self::resolveOwnerLabel($record)),
+                            ->formatStateUsing(fn(?string $state, Document $record): string => self::resolveOwnerLabel($record)),
                         TextEntry::make('type')
                             ->label(__('documents.fields.type')),
                         TextEntry::make('number')
@@ -45,8 +45,8 @@ class DocumentInfolist
                         TextEntry::make('status')
                             ->label(__('documents.fields.status'))
                             ->badge()
-                            ->formatStateUsing(fn (?string $state): string => self::statusLabel($state))
-                            ->color(fn (?string $state): string => self::statusColor($state)),
+                            ->formatStateUsing(fn(?string $state): string => self::statusLabel($state))
+                            ->color(fn(?string $state): string => self::statusColor($state)),
                         TextEntry::make('days_remaining')
                             ->label(__('documents.fields.days_remaining')),
                         TextEntry::make('notify_before_days')
@@ -145,7 +145,7 @@ class DocumentInfolist
     private static function resolveOwnerLabel(Document $record): string
     {
         if ($record->owner_type === 'employee') {
-            $employee = Employee::query()->select('name', 'phone')->find($record->owner_id);
+            $employee = User::query()->select('name', 'phone')->find($record->owner_id);
 
             if ($employee) {
                 return trim("{$employee->name} ({$employee->phone})");

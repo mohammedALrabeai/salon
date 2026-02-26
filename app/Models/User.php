@@ -145,16 +145,16 @@ class User extends Authenticatable
 
     public function dailyEntries(): HasMany
     {
-        return $this->hasMany(DailyEntry::class, 'employee_id');
+        return $this->hasMany(DailyEntry::class, 'user_id');
     }
 
     public function advanceRequests(): HasMany
     {
-        return $this->hasMany(AdvanceRequest::class, 'employee_id');
+        return $this->hasMany(AdvanceRequest::class, 'user_id');
     }
 
     public function documents(): HasMany
     {
-        return $this->hasMany(Document::class, 'owner_id')->where('owner_type', 'employee'); // Keeping 'employee' for now as per migration
+        return $this->hasMany(Document::class, 'owner_id')->where('owner_type', 'user');
     }
 }

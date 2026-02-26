@@ -15,7 +15,7 @@ class DailyEntry extends Model
 
     protected $fillable = [
         'branch_id',
-        'employee_id',
+        'user_id',
         'date',
         'sales',
         'cash',

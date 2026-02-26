@@ -51,7 +51,7 @@ class Branch extends Model
 
     public function employees(): HasMany
     {
-        return $this->hasMany(Employee::class);
+        return $this->hasMany(User::class)->whereIn('role', User::employeeRoles());
     }
 
     public function dailyEntries(): HasMany

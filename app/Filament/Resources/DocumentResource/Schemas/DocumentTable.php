@@ -4,7 +4,7 @@ namespace App\Filament\Resources\DocumentResource\Schemas;
 
 use App\Models\Branch;
 use App\Models\Document;
-use App\Models\Employee;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -42,12 +42,12 @@ class DocumentTable
                 TextColumn::make('owner_type')
                     ->label(__('documents.fields.owner_type'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::ownerTypeLabel($state))
-                    ->color(fn (?string $state): string => self::ownerTypeColor($state))
+                    ->formatStateUsing(fn(?string $state): string => self::ownerTypeLabel($state))
+                    ->color(fn(?string $state): string => self::ownerTypeColor($state))
                     ->toggleable(),
                 TextColumn::make('owner_id')
                     ->label(__('documents.fields.owner'))
-                    ->formatStateUsing(fn (?string $state, Document $record): string => self::resolveOwnerLabel($record))
+                    ->formatStateUsing(fn(?string $state, Document $record): string => self::resolveOwnerLabel($record))
                     ->toggleable(),
                 TextColumn::make('number')
                     ->label(__('documents.fields.number'))
@@ -63,8 +63,8 @@ class DocumentTable
                 TextColumn::make('status')
                     ->label(__('documents.fields.status'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::statusLabel($state))
-                    ->color(fn (?string $state): string => self::statusColor($state))
+                    ->formatStateUsing(fn(?string $state): string => self::statusLabel($state))
+                    ->color(fn(?string $state): string => self::statusColor($state))
                     ->sortable(),
                 TextColumn::make('days_remaining')
                     ->label(__('documents.fields.days_remaining'))
@@ -104,11 +104,11 @@ class DocumentTable
                     ->query(function (Builder $query, array $data): Builder {
                         $status = $data['value'] ?? null;
 
-                        if (! filled($status)) {
+                        if (!filled($status)) {
                             return $query;
                         }
 
-                        if (! self::isSqlite()) {
+                        if (!self::isSqlite()) {
                             return $query->where('status', $status);
                         }
 
@@ -125,11 +125,11 @@ class DocumentTable
                         return $query
                             ->when(
                                 $data['from'] ?? null,
-                                fn (Builder $query, $date): Builder => $query->whereDate('expiry_date', '>=', $date)
+                                fn(Builder $query, $date): Builder => $query->whereDate('expiry_date', '>=', $date)
                             )
                             ->when(
                                 $data['until'] ?? null,
-                                fn (Builder $query, $date): Builder => $query->whereDate('expiry_date', '<=', $date)
+                                fn(Builder $query, $date): Builder => $query->whereDate('expiry_date', '<=', $date)
                             );
                     }),
                 TrashedFilter::make(),
@@ -140,7 +140,7 @@ class DocumentTable
                     ->icon(Heroicon::OutlinedBellAlert)
                     ->color('info')
                     ->requiresConfirmation()
-                    ->action(fn (Document $record) => self::markNotified($record)),
+                    ->action(fn(Document $record) => self::markNotified($record)),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
@@ -216,7 +216,7 @@ class DocumentTable
     private static function resolveOwnerLabel(Document $record): string
     {
         if ($record->owner_type === 'employee') {
-            $employee = Employee::query()->select('name', 'phone')->find($record->owner_id);
+            $employee = User::query()->select('name', 'phone')->find($record->owner_id);
 
             if ($employee) {
                 return trim("{$employee->name} ({$employee->phone})");

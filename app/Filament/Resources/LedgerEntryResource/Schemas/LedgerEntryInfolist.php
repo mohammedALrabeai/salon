@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\LedgerEntryResource\Schemas;
 
 use App\Models\Branch;
-use App\Models\Employee;
+use App\Models\User;
 use App\Models\LedgerEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -20,19 +20,19 @@ class LedgerEntryInfolist
                         TextEntry::make('party_type')
                             ->label(__('ledger_entries.fields.party_type'))
                             ->badge()
-                            ->formatStateUsing(fn (?string $state): string => self::partyTypeLabel($state))
-                            ->color(fn (?string $state): string => self::partyTypeColor($state)),
+                            ->formatStateUsing(fn(?string $state): string => self::partyTypeLabel($state))
+                            ->color(fn(?string $state): string => self::partyTypeColor($state)),
                         TextEntry::make('party_id')
                             ->label(__('ledger_entries.fields.party'))
-                            ->formatStateUsing(fn (?string $state, LedgerEntry $record): string => self::resolvePartyLabel($record)),
+                            ->formatStateUsing(fn(?string $state, LedgerEntry $record): string => self::resolvePartyLabel($record)),
                         TextEntry::make('date')
                             ->label(__('ledger_entries.fields.date'))
                             ->date(),
                         TextEntry::make('type')
                             ->label(__('ledger_entries.fields.type'))
                             ->badge()
-                            ->formatStateUsing(fn (?string $state): string => self::typeLabel($state))
-                            ->color(fn (?string $state): string => self::typeColor($state)),
+                            ->formatStateUsing(fn(?string $state): string => self::typeLabel($state))
+                            ->color(fn(?string $state): string => self::typeColor($state)),
                     ])
                     ->columns(4),
                 Section::make(__('ledger_entries.sections.details'))
@@ -44,15 +44,15 @@ class LedgerEntryInfolist
                         TextEntry::make('source')
                             ->label(__('ledger_entries.fields.source'))
                             ->badge()
-                            ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state)),
+                            ->formatStateUsing(fn(?string $state): string => self::sourceLabel($state)),
                         TextEntry::make('status')
                             ->label(__('ledger_entries.fields.status'))
                             ->badge()
-                            ->formatStateUsing(fn (?string $state): string => self::statusLabel($state))
-                            ->color(fn (?string $state): string => self::statusColor($state)),
+                            ->formatStateUsing(fn(?string $state): string => self::statusLabel($state))
+                            ->color(fn(?string $state): string => self::statusColor($state)),
                         TextEntry::make('payment_method')
                             ->label(__('ledger_entries.fields.payment_method'))
-                            ->formatStateUsing(fn (?string $state): string => self::paymentMethodLabel($state)),
+                            ->formatStateUsing(fn(?string $state): string => self::paymentMethodLabel($state)),
                         TextEntry::make('category')
                             ->label(__('ledger_entries.fields.category')),
                     ])
@@ -64,7 +64,7 @@ class LedgerEntryInfolist
                             ->columnSpanFull(),
                         TextEntry::make('attachment_url')
                             ->label(__('ledger_entries.fields.attachment_url'))
-                            ->url(fn (?string $state): ?string => $state)
+                            ->url(fn(?string $state): ?string => $state)
                             ->openUrlInNewTab(),
                     ])
                     ->columns(2)
@@ -223,7 +223,7 @@ class LedgerEntryInfolist
     private static function resolvePartyLabel(LedgerEntry $record): string
     {
         if ($record->party_type === 'employee') {
-            $employee = Employee::query()->select('name', 'phone')->find($record->party_id);
+            $employee = User::query()->select('name', 'phone')->find($record->party_id);
 
             if ($employee) {
                 return trim("{$employee->name} ({$employee->phone})");
