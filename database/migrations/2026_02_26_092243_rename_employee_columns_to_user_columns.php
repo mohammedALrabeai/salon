@@ -52,6 +52,10 @@ return new class extends Migration {
         // For SQLite, Schema::table(... change()) requires doctrine/dbal. 
         // If it throws errors on sqlite for enums, we'll recreate the check constraint or just change it to string, update, and back.
 
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA writable_schema = 1;');
+        }
+
         if (Schema::hasTable('documents')) {
             if ($driver === 'sqlite') {
                 // Change ENUM to string type first to drop the check constraint
@@ -100,6 +104,7 @@ return new class extends Migration {
         }
 
         if ($driver === 'sqlite') {
+            DB::statement('PRAGMA writable_schema = 0;');
             DB::statement('PRAGMA foreign_keys=ON;');
         }
     }
