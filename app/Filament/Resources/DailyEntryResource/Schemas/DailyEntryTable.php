@@ -105,7 +105,7 @@ class DailyEntryTable
                     ->relationship('branch', 'name'),
                 SelectFilter::make('user_id')
                     ->label(__('daily_entries.fields.user_id'))
-                    ->relationship('user', 'name'),
+                    ->relationship('employee', 'name'),
                 SelectFilter::make('source')
                     ->label(__('daily_entries.fields.source'))
                     ->options(self::sourceOptions()),

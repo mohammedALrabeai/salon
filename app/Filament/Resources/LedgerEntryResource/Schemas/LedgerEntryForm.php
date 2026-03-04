@@ -25,7 +25,7 @@ class LedgerEntryForm
                             ->label(__('ledger_entries.fields.party_type'))
                             ->options(self::partyTypeOptions())
                             ->required()
-                            ->default('employee')
+                            ->default('user')
                             ->live()
                             ->afterStateUpdated(function (Set $set): void {
                                 $set('party_id', null);
@@ -36,7 +36,7 @@ class LedgerEntryForm
                             ->options(fn(Get $get) => self::partyOptions($get('party_type')))
                             ->searchable()
                             ->preload()
-                            ->visible(fn(Get $get): bool => in_array($get('party_type'), ['employee', 'branch'], true))
+                            ->visible(fn(Get $get): bool => in_array($get('party_type'), ['user', 'branch'], true))
                             ->default(fn(Get $get) => $get('party_id'))
                             ->afterStateUpdated(function (Set $set, ?string $state): void {
                                 if ($state) {
@@ -122,7 +122,7 @@ class LedgerEntryForm
     private static function partyTypeOptions(): array
     {
         return [
-            'employee' => __('ledger_entries.party_types.employee'),
+            'user' => __('ledger_entries.party_types.user'),
             'branch' => __('ledger_entries.party_types.branch'),
             'supplier' => __('ledger_entries.party_types.supplier'),
             'customer' => __('ledger_entries.party_types.customer'),
@@ -184,7 +184,7 @@ class LedgerEntryForm
      */
     private static function partyOptions(?string $partyType): array
     {
-        if ($partyType === 'employee') {
+        if ($partyType === 'user') {
             return User::query()
                 ->whereIn('role', User::employeeRoles())
                 ->orderBy('name')

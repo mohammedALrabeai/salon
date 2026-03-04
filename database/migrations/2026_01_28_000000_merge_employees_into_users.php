@@ -6,8 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         $this->addEmployeeFieldsToUsers();
@@ -24,36 +23,36 @@ return new class extends Migration
     private function addEmployeeFieldsToUsers(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (! Schema::hasColumn('users', 'national_id')) {
+            if (!Schema::hasColumn('users', 'national_id')) {
                 $table->string('national_id', 20)->nullable();
             }
-            if (! Schema::hasColumn('users', 'passport_number')) {
+            if (!Schema::hasColumn('users', 'passport_number')) {
                 $table->string('passport_number', 20)->nullable();
             }
-            if (! Schema::hasColumn('users', 'hire_date')) {
+            if (!Schema::hasColumn('users', 'hire_date')) {
                 $table->date('hire_date')->nullable();
             }
-            if (! Schema::hasColumn('users', 'termination_date')) {
+            if (!Schema::hasColumn('users', 'termination_date')) {
                 $table->date('termination_date')->nullable();
             }
-            if (! Schema::hasColumn('users', 'employment_type')) {
+            if (!Schema::hasColumn('users', 'employment_type')) {
                 $table->enum('employment_type', ['full_time', 'part_time', 'contract', 'freelance'])->nullable();
             }
-            if (! Schema::hasColumn('users', 'commission_rate')) {
+            if (!Schema::hasColumn('users', 'commission_rate')) {
                 $table->decimal('commission_rate', 5, 2)->nullable();
             }
-            if (! Schema::hasColumn('users', 'commission_type')) {
+            if (!Schema::hasColumn('users', 'commission_type')) {
                 $table->enum('commission_type', ['percentage', 'fixed', 'tiered'])->nullable();
             }
-            if (! Schema::hasColumn('users', 'base_salary')) {
+            if (!Schema::hasColumn('users', 'base_salary')) {
                 $table->decimal('base_salary', 10, 2)->nullable();
             }
-            if (! Schema::hasColumn('users', 'skills')) {
+            if (!Schema::hasColumn('users', 'skills')) {
                 $driver = DB::getDriverName();
                 if ($driver === 'pgsql') {
-                    $table->jsonb('skills')->default('[]');
+                    $table->jsonb('skills')->nullable();
                 } else {
-                    $table->json('skills')->default('[]');
+                    $table->json('skills')->nullable();
                 }
             }
         });
@@ -78,17 +77,17 @@ return new class extends Migration
         if ($driver === 'pgsql') {
             DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
             DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check");
-            DB::statement("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role in ('".implode("','", $roles)."'))");
-            DB::statement("ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status in ('".implode("','", $statuses)."'))");
+            DB::statement("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role in ('" . implode("','", $roles) . "'))");
+            DB::statement("ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status in ('" . implode("','", $statuses) . "'))");
         } elseif ($driver === 'mysql') {
-            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('".implode("','", $roles)."') NOT NULL");
-            DB::statement("ALTER TABLE users MODIFY COLUMN status ENUM('".implode("','", $statuses)."') NOT NULL DEFAULT 'active'");
+            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('" . implode("','", $roles) . "') NOT NULL");
+            DB::statement("ALTER TABLE users MODIFY COLUMN status ENUM('" . implode("','", $statuses) . "') NOT NULL DEFAULT 'active'");
         }
     }
 
     private function mergeEmployeesIntoUsers(): void
     {
-        if (! Schema::hasTable('employees')) {
+        if (!Schema::hasTable('employees')) {
             return;
         }
 

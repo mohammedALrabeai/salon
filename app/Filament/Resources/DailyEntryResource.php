@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Filament\Resources\DailyEntryResource\Widgets\DailySalesChart;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -21,7 +22,7 @@ class DailyEntryResource extends Resource
 {
     protected static ?string $model = DailyEntry::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
     public static function getModelLabel(): string
     {
@@ -70,6 +71,13 @@ class DailyEntryResource extends Resource
             'create' => CreateDailyEntry::route('/create'),
             'view' => ViewDailyEntry::route('/{record}'),
             'edit' => EditDailyEntry::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            DailySalesChart::class,
         ];
     }
 

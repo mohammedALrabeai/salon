@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -28,8 +27,8 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive', 'maintenance'])->default('active');
             $table->time('opening_time')->nullable();
             $table->time('closing_time')->nullable();
-            $table->jsonb('working_days')->default('["sunday","monday","tuesday","wednesday","thursday","friday","saturday"]');
-            $table->jsonb('settings')->default('{}');
+            $table->jsonb('working_days')->nullable();
+            $table->jsonb('settings')->nullable();
             $table->timestampTz('created_at')->useCurrent();
             $table->timestampTz('updated_at')->useCurrent()->useCurrentOnUpdate();
             $table->timestampTz('deleted_at')->nullable();

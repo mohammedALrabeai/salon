@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -35,8 +34,8 @@ return new class extends Migration
             $table->timestampTz('locked_until')->nullable();
             $table->text('avatar_url')->nullable();
             $table->text('bio')->nullable();
-            $table->jsonb('settings')->default('{}');
-            $table->jsonb('preferences')->default('{}');
+            $table->jsonb('settings')->nullable();
+            $table->jsonb('preferences')->nullable();
             $table->timestampTz('created_at')->useCurrent();
             $table->timestampTz('updated_at')->useCurrent()->useCurrentOnUpdate();
             $table->timestampTz('deleted_at')->nullable();

@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -15,13 +14,13 @@ return new class extends Migration
 
         $statusExpression = match ($driver) {
             'pgsql' => "CASE WHEN expiry_date IS NULL THEN 'safe' WHEN expiry_date < CURRENT_DATE THEN 'expired' WHEN expiry_date <= (CURRENT_DATE + INTERVAL '15 days') THEN 'urgent' WHEN expiry_date <= (CURRENT_DATE + INTERVAL '60 days') THEN 'near' ELSE 'safe' END",
-            'mysql' => "CASE WHEN expiry_date IS NULL THEN 'safe' WHEN expiry_date < CURRENT_DATE THEN 'expired' WHEN expiry_date <= (CURRENT_DATE + INTERVAL 15 DAY) THEN 'urgent' WHEN expiry_date <= (CURRENT_DATE + INTERVAL 60 DAY) THEN 'near' ELSE 'safe' END",
+            'mysql' => null,
             default => null,
         };
 
         $daysRemainingExpression = match ($driver) {
             'pgsql' => "CASE WHEN expiry_date IS NULL THEN NULL ELSE (expiry_date - CURRENT_DATE) END",
-            'mysql' => 'DATEDIFF(expiry_date, CURRENT_DATE)',
+            'mysql' => null,
             default => null,
         };
 

@@ -37,7 +37,7 @@ class DailyEntryForm
                         Select::make('user_id')
                             ->label(__('daily_entries.fields.user_id'))
                             ->relationship(
-                                name: 'user',
+                                name: 'employee',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: fn($query, Get $get) => $query->when(
                                     $get('branch_id'),
@@ -52,14 +52,16 @@ class DailyEntryForm
                             ->required(),
                         DatePicker::make('date')
                             ->label(__('daily_entries.fields.date'))
+                            ->default(fn() => now())
                             ->required(),
                         Select::make('source')
                             ->label(__('daily_entries.fields.source'))
                             ->options(self::sourceOptions())
                             ->required()
-                            ->default('web'),
+                            ->default('web')
+                            ->hidden(),
                     ])
-                    ->columns(4),
+                    ->columns(3),
                 Section::make(__('daily_entries.sections.financial'))
                     ->schema([
                         TextInput::make('sales')
@@ -120,23 +122,12 @@ class DailyEntryForm
                     ->columns(3),
                 Section::make(__('daily_entries.sections.bonus'))
                     ->schema([
-                        TextInput::make('bonus')
-                            ->label(__('daily_entries.fields.bonus'))
-                            ->numeric()
-                            ->minValue(0)
-                            ->step(0.01)
-                            ->suffix('SAR')
-                            ->default(0),
-                        Textarea::make('bonus_reason')
-                            ->label(__('daily_entries.fields.bonus_reason'))
-                            ->rows(2)
-                            ->columnSpanFull(),
                         Textarea::make('note')
                             ->label(__('daily_entries.fields.note'))
                             ->rows(3)
                             ->columnSpanFull(),
                     ])
-                    ->columns(2)
+                    ->columns(1)
                     ->collapsible()
                     ->collapsed(),
                 Section::make(__('daily_entries.sections.lock'))

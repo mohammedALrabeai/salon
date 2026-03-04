@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\DailyEntryResource\Pages;
 
 use App\Filament\Resources\DailyEntryResource;
+use App\Filament\Resources\DailyEntryResource\Widgets\DailySalesChart;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
@@ -14,6 +15,13 @@ class ListDailyEntries extends ListRecords
     {
         return [
             CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            DailySalesChart::class,
         ];
     }
 }

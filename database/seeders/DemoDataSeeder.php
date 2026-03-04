@@ -23,8 +23,17 @@ class DemoDataSeeder extends Seeder
     public function run(): void
     {
         $now = now();
-        $admin = User::query()->where('role', 'super_admin')->first() ?? User::query()->first();
-        $adminId = $admin?->id;
+        $admin = User::firstOrCreate(
+            ['role' => 'super_admin'],
+            [
+                'name' => 'Super Admin',
+                'email' => 'admin@salon.local',
+                'phone' => '0500000000',
+                'password_hash' => Hash::make('12345678'),
+                'status' => 'active',
+            ]
+        );
+        $adminId = $admin->id;
 
         $roleUsers = [
             [
@@ -332,7 +341,7 @@ class DemoDataSeeder extends Seeder
                 'type' => 'debit',
             ],
             [
-                'party_type' => 'employee',
+                'party_type' => 'user',
                 'party_id' => $employeeSami->id,
                 'amount' => 300.00,
                 'description' => 'Employee advance payment',
@@ -400,7 +409,7 @@ class DemoDataSeeder extends Seeder
 
         $employeeDocument = Document::updateOrCreate(
             [
-                'owner_type' => 'employee',
+                'owner_type' => 'user',
                 'owner_id' => $employeeAhmed->id,
                 'type' => 'id',
                 'number' => 'EMP-1001',
@@ -481,7 +490,7 @@ class DemoDataSeeder extends Seeder
                     'channels' => ['in_app', 'email'],
                     'data' => [
                         'document_id' => $employeeDocument->id,
-                        'owner_type' => 'employee',
+                        'owner_type' => 'user',
                     ],
                 ]
             );
@@ -511,7 +520,7 @@ class DemoDataSeeder extends Seeder
         AuditLog::updateOrCreate(
             [
                 'action' => 'create',
-                'entity_type' => 'employee',
+                'entity_type' => 'user',
                 'entity_id' => $employeeAhmed->id,
             ],
             [

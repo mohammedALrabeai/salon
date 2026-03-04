@@ -4,6 +4,8 @@ namespace App\Filament\Resources\DayClosureResource\Pages;
 
 use App\Filament\Resources\DayClosureResource;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
+use App\Models\DailyEntry;
 use Filament\Resources\Pages\EditRecord;
 
 class EditDayClosure extends EditRecord
@@ -13,6 +15,41 @@ class EditDayClosure extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('compute_totals')
+                ->label(__('Compute Totals'))
+                ->icon('heroicon-m-calculator')
+                ->action(function () {
+                    $data = $this->form->getRawState();
+                    $branchId = $data['branch_id'] ?? null;
+                    $date = $data['date'] ?? null;
+
+                    if (!$branchId || !$date) {
+                        return;
+                    }
+
+                    $entries = DailyEntry::query()
+                        ->where('branch_id', $branchId)
+                        ->whereDate('date', $date)
+                        ->get();
+
+                    $sales = $entries->sum('sales');
+                    $cash = $entries->sum('cash');
+                    $expense = $entries->sum('expense');
+                    $commission = $entries->sum('commission');
+                    $bonus = $entries->sum('bonus');
+
+                    $this->form->fill([
+                        ...$data,
+                        'total_sales' => $sales,
+                        'total_cash' => $cash,
+                        'total_expense' => $expense,
+                        'total_commission' => $commission,
+                        'total_bonus' => $bonus,
+                        'total_net' => $sales - $cash - $expense,
+                        'entries_count' => $entries->count(),
+                        'employees_count' => $entries->pluck('user_id')->unique()->count(),
+                    ]);
+                }),
             DeleteAction::make(),
         ];
     }
@@ -33,7 +70,7 @@ class EditDayClosure extends EditRecord
             $data['closed_at'] = $this->record->closed_at ?? now();
         }
 
-        if (! array_key_exists('total_net', $data) || $data['total_net'] === null) {
+        if (!array_key_exists('total_net', $data) || $data['total_net'] === null) {
             $data['total_net'] = $this->calculateNet($data);
         }
 

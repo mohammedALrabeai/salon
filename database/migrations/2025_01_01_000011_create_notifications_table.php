@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -18,11 +17,11 @@ return new class extends Migration
             $table->uuid('target_id')->nullable();
             $table->string('title', 200);
             $table->text('message');
-            $table->jsonb('data')->default('{}');
+            $table->jsonb('data')->nullable();
             $table->text('action_url')->nullable();
             $table->enum('status', ['pending', 'sent', 'read', 'failed'])->default('pending');
             $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal');
-            $table->jsonb('channels')->default('["in_app"]');
+            $table->jsonb('channels')->nullable();
             $table->timestampTz('created_at')->useCurrent();
             $table->timestampTz('sent_at')->nullable();
             $table->timestampTz('read_at')->nullable();
