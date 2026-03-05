@@ -38,6 +38,105 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // Assign permissions to roles
+        $barberPermissions = [
+            'ViewAny:DailyEntry',
+            'View:DailyEntry',
+            'Create:DailyEntry',
+            'ViewAny:AdvanceRequest',
+            'View:AdvanceRequest',
+            'Create:AdvanceRequest',
+            'ViewAny:LedgerEntry',
+            'View:LedgerEntry',
+            'ViewAny:Notification',
+            'View:Notification',
+            'Update:Notification',
+        ];
+
+        $managerPermissions = [
+            'ViewAny:DailyEntry',
+            'View:DailyEntry',
+            'Create:DailyEntry',
+            'Update:DailyEntry',
+            'Delete:DailyEntry',
+            'ViewAny:DayClosure',
+            'View:DayClosure',
+            'Create:DayClosure',
+            'ViewAny:AdvanceRequest',
+            'View:AdvanceRequest',
+            'Create:AdvanceRequest',
+            'Update:AdvanceRequest',
+            'ViewAny:LedgerEntry',
+            'View:LedgerEntry',
+            'Create:LedgerEntry',
+            'ViewAny:User',
+            'View:User',
+            'Create:User',
+            'Update:User',
+            'ViewAny:Branch',
+            'View:Branch',
+            'ViewAny:Document',
+            'View:Document',
+            'Create:Document',
+            'Update:Document',
+            'ViewAny:Notification',
+            'View:Notification',
+            'Create:Notification',
+            'Update:Notification',
+        ];
+
+        $ownerPermissions = array_merge($managerPermissions, [
+            'Delete:User',
+            'Update:Branch',
+            'Create:Branch',
+            'Delete:DayClosure',
+            'Delete:AdvanceRequest',
+            'ViewAny:Activity',
+            'View:Activity',
+            'ViewAny:Role',
+            'View:Role',
+        ]);
+
+        // Ensure permissions exist before assigning
+        $allPermissions = \Spatie\Permission\Models\Permission::pluck('name')->toArray();
+
+        $barberRole = Role::findByName('barber', 'web');
+        $barberRole->syncPermissions(array_intersect($barberPermissions, $allPermissions));
+
+        $managerRole = Role::findByName('manager', 'web');
+        $managerRole->syncPermissions(array_intersect($managerPermissions, $allPermissions));
+
+        $ownerRole = Role::findByName('owner', 'web');
+        $ownerRole->syncPermissions(array_intersect($ownerPermissions, $allPermissions));
+
+        // Receptionist gets similar to barber
+        $receptionistRole = Role::findByName('receptionist', 'web');
+        $receptionistRole->syncPermissions(array_intersect($barberPermissions, $allPermissions));
+
+        // Accountant gets financial permissions
+        $accountantPermissions = [
+            'ViewAny:DailyEntry',
+            'View:DailyEntry',
+            'ViewAny:DayClosure',
+            'View:DayClosure',
+            'Create:DayClosure',
+            'ViewAny:LedgerEntry',
+            'View:LedgerEntry',
+            'Create:LedgerEntry',
+            'ViewAny:AdvanceRequest',
+            'View:AdvanceRequest',
+            'Update:AdvanceRequest',
+            'ViewAny:User',
+            'View:User',
+            'ViewAny:Branch',
+            'View:Branch',
+            'ViewAny:Notification',
+            'View:Notification',
+            'Update:Notification',
+        ];
+        $accountantRole = Role::findByName('accountant', 'web');
+        $accountantRole->syncPermissions(array_intersect($accountantPermissions, $allPermissions));
+
         User::updateOrCreate(
             ['phone' => '0500000000'],
             [
