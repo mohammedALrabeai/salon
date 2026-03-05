@@ -17,7 +17,7 @@ class AuthController extends ApiController
     public function login(Request $request)
     {
         $data = $request->validate([
-            'phone' => ['required', 'string'],
+            'phone' => ['required', 'string'], // Used for both phone and email
             'password' => ['required', 'string'],
             'device_info.device_id' => ['nullable', 'string', 'max:100'],
             'device_info.device_name' => ['nullable', 'string', 'max:100'],
@@ -25,9 +25,12 @@ class AuthController extends ApiController
             'device_info.app_version' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $user = User::query()->where('phone', $data['phone'])->first();
+        $user = User::query()
+            ->where('phone', $data['phone'])
+            ->orWhere('email', $data['phone'])
+            ->first();
 
-        if (! $user) {
+        if (!$user) {
             return $this->error('INVALID_CREDENTIALS', 'رقم الجوال أو كلمة المرور غير صحيحة', 401);
         }
 
@@ -43,7 +46,7 @@ class AuthController extends ApiController
             ]);
         }
 
-        if (! Hash::check($data['password'], $user->password_hash)) {
+        if (!Hash::check($data['password'], $user->password_hash)) {
             $this->handleFailedLogin($user);
 
             return $this->error('INVALID_CREDENTIALS', 'رقم الجوال أو كلمة المرور غير صحيحة', 401);
@@ -101,7 +104,7 @@ class AuthController extends ApiController
             ->where('refresh_token_hash', hash('sha256', $data['refresh_token']))
             ->first();
 
-        if (! $token || $token->revoked_at) {
+        if (!$token || $token->revoked_at) {
             return $this->error('TOKEN_INVALID', 'الرمز غير صالح', 401);
         }
 
@@ -109,7 +112,7 @@ class AuthController extends ApiController
             return $this->error('TOKEN_EXPIRED', 'انتهت صلاحية الرمز', 401);
         }
 
-        if (! $token->user || $token->user->status !== 'active') {
+        if (!$token->user || $token->user->status !== 'active') {
             return $this->error('ACCOUNT_INACTIVE', 'حسابك غير نشط. يرجى التواصل مع الإدارة', 403, [
                 'status' => $token->user?->status,
             ]);
