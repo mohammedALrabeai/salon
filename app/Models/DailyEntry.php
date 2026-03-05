@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\LedgerEntry;
 
 class DailyEntry extends Model
 {
@@ -55,9 +56,9 @@ class DailyEntry extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function employee(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'employee_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function lockedBy(): BelongsTo
@@ -73,5 +74,64 @@ class DailyEntry extends Model
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (DailyEntry $entry) {
+            $amount = $entry->commission + $entry->bonus;
+            if ($amount > 0) {
+                LedgerEntry::create([
+                    'party_type' => 'user',
+                    'party_id' => $entry->user_id,
+                    'date' => $entry->date,
+                    'type' => 'credit',
+                    'amount' => $amount,
+                    'description' => 'عمولة اليوم (' . $entry->date->format('Y-m-d') . ')',
+                    'source' => 'other',
+                    'reference_id' => $entry->id,
+                    'reference_type' => self::class,
+                    'status' => 'confirmed',
+                ]);
+            }
+        });
+
+        static::updated(function (DailyEntry $entry) {
+            $amount = $entry->commission + $entry->bonus;
+            $ledgerEntry = LedgerEntry::where('reference_type', self::class)
+                ->where('reference_id', $entry->id)
+                ->first();
+
+            if ($amount > 0) {
+                if ($ledgerEntry) {
+                    $ledgerEntry->update([
+                        'amount' => $amount,
+                        'date' => $entry->date,
+                        'description' => 'عمولة اليوم (' . $entry->date->format('Y-m-d') . ')',
+                    ]);
+                } else {
+                    LedgerEntry::create([
+                        'party_type' => 'user',
+                        'party_id' => $entry->user_id,
+                        'date' => $entry->date,
+                        'type' => 'credit',
+                        'amount' => $amount,
+                        'description' => 'عمولة اليوم (' . $entry->date->format('Y-m-d') . ')',
+                        'source' => 'other',
+                        'reference_id' => $entry->id,
+                        'reference_type' => self::class,
+                        'status' => 'confirmed',
+                    ]);
+                }
+            } elseif ($ledgerEntry) {
+                $ledgerEntry->delete();
+            }
+        });
+
+        static::deleted(function (DailyEntry $entry) {
+            LedgerEntry::where('reference_type', self::class)
+                ->where('reference_id', $entry->id)
+                ->delete();
+        });
     }
 }

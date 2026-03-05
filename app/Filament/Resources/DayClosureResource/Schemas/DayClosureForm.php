@@ -28,7 +28,8 @@ class DayClosureForm
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->live(),
+                            ->live()
+                            ->afterStateUpdated(fn(Set $set, Get $get) => self::computeTotals($set, $get)),
                         DatePicker::make('date')
                             ->label(__('day_closures.fields.date'))
                             ->required()
@@ -36,7 +37,8 @@ class DayClosureForm
                                 ignoreRecord: true,
                                 modifyRuleUsing: fn(Unique $rule, Get $get) => $rule->where('branch_id', $get('branch_id'))
                             )
-                            ->live(),
+                            ->live()
+                            ->afterStateUpdated(fn(Set $set, Get $get) => self::computeTotals($set, $get)),
                         Select::make('closed_by')
                             ->label(__('day_closures.fields.closed_by'))
                             ->relationship('closedBy', 'name')
@@ -121,5 +123,27 @@ class DayClosureForm
             ]);
     }
 
+    public static function computeTotals(Set $set, Get $get): void
+    {
+        $branchId = $get('branch_id');
+        $date = $get('date');
 
+        if (!$branchId || !$date) {
+            return;
+        }
+
+        $entries = DailyEntry::query()
+            ->where('branch_id', $branchId)
+            ->whereDate('date', $date)
+            ->get();
+
+        $set('total_sales', $entries->sum('sales'));
+        $set('total_cash', $entries->sum('cash'));
+        $set('total_expense', $entries->sum('expense'));
+        $set('total_commission', $entries->sum('commission'));
+        $set('total_bonus', $entries->sum('bonus'));
+        $set('total_net', $entries->sum('net'));
+        $set('entries_count', $entries->count());
+        $set('employees_count', $entries->unique('user_id')->count());
+    }
 }

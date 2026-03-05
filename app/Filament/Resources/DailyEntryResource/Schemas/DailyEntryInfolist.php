@@ -19,12 +19,12 @@ class DailyEntryInfolist
                             ->date(),
                         TextEntry::make('branch.name')
                             ->label(__('daily_entries.fields.branch_id')),
-                        TextEntry::make('employee.name')
-                            ->label(__('daily_entries.fields.employee_id')),
+                        TextEntry::make('user.name')
+                            ->label(__('daily_entries.fields.user_id')),
                         TextEntry::make('source')
                             ->label(__('daily_entries.fields.source'))
                             ->badge()
-                            ->formatStateUsing(fn (?string $state): string => self::sourceLabel($state)),
+                            ->formatStateUsing(fn(?string $state): string => self::sourceLabel($state)),
                     ])
                     ->columns(4),
                 Section::make(__('daily_entries.sections.financial'))
@@ -83,8 +83,8 @@ class DailyEntryInfolist
                         TextEntry::make('is_locked')
                             ->label(__('daily_entries.fields.is_locked'))
                             ->badge()
-                            ->formatStateUsing(fn (bool $state): string => $state ? __('daily_entries.locked.yes') : __('daily_entries.locked.no'))
-                            ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
+                            ->formatStateUsing(fn(bool $state): string => $state ? __('daily_entries.locked.yes') : __('daily_entries.locked.no'))
+                            ->color(fn(bool $state): string => $state ? 'success' : 'gray'),
                         TextEntry::make('lockedBy.name')
                             ->label(__('daily_entries.fields.locked_by')),
                         TextEntry::make('locked_at')
