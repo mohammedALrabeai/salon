@@ -17,9 +17,9 @@ use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
-        commands: __DIR__.'/../routes/console.php',
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -41,7 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         };
 
         $exceptions->render(function (ValidationException $exception, Request $request) use ($isApiRequest) {
-            if (! $isApiRequest($request)) {
+            if (!$isApiRequest($request)) {
                 return null;
             }
 
@@ -49,7 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (AuthenticationException $exception, Request $request) use ($isApiRequest) {
-            if (! $isApiRequest($request)) {
+            if (!$isApiRequest($request)) {
                 return null;
             }
 
@@ -57,7 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (PermissionDeniedException $exception, Request $request) use ($isApiRequest) {
-            if (! $isApiRequest($request)) {
+            if (!$isApiRequest($request)) {
                 return null;
             }
 
@@ -68,7 +68,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (AuthorizationException $exception, Request $request) use ($isApiRequest) {
-            if (! $isApiRequest($request)) {
+            if (!$isApiRequest($request)) {
                 return null;
             }
 
@@ -76,7 +76,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (ModelNotFoundException $exception, Request $request) use ($isApiRequest) {
-            if (! $isApiRequest($request)) {
+            if (!$isApiRequest($request)) {
                 return null;
             }
 
@@ -84,7 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (NotFoundHttpException $exception, Request $request) use ($isApiRequest) {
-            if (! $isApiRequest($request)) {
+            if (!$isApiRequest($request)) {
                 return null;
             }
 
@@ -92,7 +92,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (QueryException $exception, Request $request) use ($isApiRequest) {
-            if (! $isApiRequest($request)) {
+            if (!$isApiRequest($request)) {
                 return null;
             }
 
@@ -107,7 +107,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (HttpExceptionInterface $exception, Request $request) use ($isApiRequest) {
-            if (! $isApiRequest($request)) {
+            if (!$isApiRequest($request)) {
                 return null;
             }
 
@@ -117,6 +117,20 @@ return Application::configure(basePath: dirname(__DIR__))
                 ]);
             }
 
-            return ApiResponse::error('ERROR', 'حدث خطأ غير متوقع', $exception->getStatusCode());
+            $details = [];
+            if (config('app.debug')) {
+                $details = [
+                    'exception_class' => get_class($exception),
+                    'exception_message' => $exception->getMessage(),
+                    'file' => $exception->getFile(),
+                    'line' => $exception->getLine(),
+                ];
+                if ($exception->getPrevious()) {
+                    $details['previous_exception'] = get_class($exception->getPrevious());
+                    $details['previous_message'] = $exception->getPrevious()->getMessage();
+                }
+            }
+
+            return ApiResponse::error('ERROR', 'حدث خطأ غير متوقع', $exception->getStatusCode(), $details);
         });
     })->create();
