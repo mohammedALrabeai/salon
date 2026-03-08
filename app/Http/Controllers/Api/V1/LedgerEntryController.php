@@ -12,7 +12,7 @@ class LedgerEntryController extends ApiController
 {
     public function index(Request $request)
     {
-        $this->requirePermission('ViewAny:LedgerEntry');
+        $this->requirePermissionOrSelf('ViewAny:LedgerEntry', $request->string('party_id')->toString() ?: null);
 
         $query = LedgerEntry::query()->with('createdBy');
 
@@ -138,7 +138,7 @@ class LedgerEntryController extends ApiController
 
     public function balance(string $party_type, string $party_id)
     {
-        $this->requirePermission('ViewAny:LedgerEntry');
+        $this->requirePermissionOrSelf('ViewAny:LedgerEntry', $party_id);
 
         if (!in_array($party_type, ['user', 'branch', 'supplier', 'customer'], true)) {
             return $this->error('VALIDATION_ERROR', 'نوع الطرف غير صالح', 422);

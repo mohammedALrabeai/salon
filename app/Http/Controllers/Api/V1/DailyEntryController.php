@@ -13,7 +13,7 @@ class DailyEntryController extends ApiController
 {
     public function index(Request $request)
     {
-        $this->requirePermission('ViewAny:DailyEntry');
+        $this->requirePermissionOrSelf('ViewAny:DailyEntry', $request->string('user_id')->toString() ?: null);
 
         $query = DailyEntry::query()->with(['user', 'branch']);
 
@@ -91,7 +91,7 @@ class DailyEntryController extends ApiController
 
     public function store(Request $request)
     {
-        $this->requirePermission('Create:DailyEntry');
+        $this->requirePermissionOrSelf('Create:DailyEntry', $request->input('user_id'));
 
         $data = $request->validate([
             'user_id' => [
@@ -181,7 +181,7 @@ class DailyEntryController extends ApiController
 
     public function show(DailyEntry $dailyEntry)
     {
-        $this->requirePermission('View:DailyEntry');
+        $this->requirePermissionOrSelf('View:DailyEntry', $dailyEntry->user_id);
 
         $dailyEntry->load(['user', 'branch', 'createdBy']);
 
@@ -322,7 +322,7 @@ class DailyEntryController extends ApiController
 
     public function userStats(Request $request, User $user)
     {
-        $this->requirePermission('ViewAny:DailyEntry');
+        $this->requirePermissionOrSelf('ViewAny:DailyEntry', $user->id);
 
         $data = $request->validate([
             'date_from' => ['nullable', 'date'],

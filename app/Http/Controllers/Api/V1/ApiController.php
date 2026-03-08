@@ -29,8 +29,30 @@ abstract class ApiController extends Controller
     {
         $user = request()->user();
 
-        if (! $user || ! $user->can($permission)) {
+        if (!$user || !$user->can($permission)) {
             throw new PermissionDeniedException($permission, $user?->role);
+        }
+    }
+
+    /**
+     * Allow employee-role users (barber, receptionist, etc.) to bypass permission
+     * checks when they are accessing their own data.
+     */
+    protected function requirePermissionOrSelf(string $permission, ?string $resourceUserId = null): void
+    {
+        $user = request()->user();
+
+        if (!$user) {
+            throw new PermissionDeniedException($permission, null);
+        }
+
+        // If user is an employee role and accessing their own data, allow it
+        if ($resourceUserId && $user->id === $resourceUserId && in_array($user->role, \App\Models\User::employeeRoles())) {
+            return;
+        }
+
+        if (!$user->can($permission)) {
+            throw new PermissionDeniedException($permission, $user->role);
         }
     }
 

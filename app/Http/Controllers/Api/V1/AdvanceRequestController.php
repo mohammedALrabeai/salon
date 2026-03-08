@@ -15,7 +15,7 @@ class AdvanceRequestController extends ApiController
 {
     public function index(Request $request)
     {
-        $this->requirePermission('ViewAny:AdvanceRequest');
+        $this->requirePermissionOrSelf('ViewAny:AdvanceRequest', $request->string('user_id')->toString() ?: null);
 
         $query = AdvanceRequest::query()->with(['user', 'branch']);
 
@@ -66,7 +66,7 @@ class AdvanceRequestController extends ApiController
 
     public function store(Request $request)
     {
-        $this->requirePermission('Create:AdvanceRequest');
+        $this->requirePermissionOrSelf('Create:AdvanceRequest', $request->input('user_id') ?? $request->user()?->id);
 
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'min:1'],

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AdvanceRequestController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BarberController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\DailyEntryController;
 use App\Http\Controllers\Api\V1\DayClosureController;
@@ -73,5 +74,9 @@ Route::prefix('v1')->group(function () {
         Route::get('analytics/compare', [AnalyticsController::class, 'compare']);
 
         Route::post('webhooks', [WebhookController::class, 'store']);
+
+        // Barber-specific endpoints (auto-scoped to authenticated user)
+        Route::get('barber/dashboard', [BarberController::class, 'dashboard']);
+        Route::get('barber/history', [BarberController::class, 'history']);
     });
 });
