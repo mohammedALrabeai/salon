@@ -207,4 +207,175 @@ class BarberController extends ApiController
             ],
         ]);
     }
+
+    /**
+     * GET /barber/reports?period=month
+     * Returns current stats, previous period comparison, weekly chart, best/worst days.
+     */
+    public function reports(Request $request)
+    {
+        $user = $request->user();
+        $period = $request->query('period', 'month');
+
+        $today = Carbon::today();
+        $todayStr = $today->toDateString();
+
+        // Compute date ranges for current and previous periods
+        switch ($period) {
+            case 'week':
+                $from = $today->copy()->subDays(6);
+                $prevTo = $from->copy()->subDay();
+                $prevFrom = $prevTo->copy()->subDays(6);
+                break;
+            case 'quarter':
+                $from = $today->copy()->subDays(89);
+                $prevTo = $from->copy()->subDay();
+                $prevFrom = $prevTo->copy()->subDays(89);
+                break;
+            case 'year':
+                $from = Carbon::create($today->year, 1, 1);
+                $prevFrom = Carbon::create($today->year - 1, 1, 1);
+                $prevTo = Carbon::create($today->year - 1, 12, 31);
+                break;
+            case 'month':
+            default:
+                $from = $today->copy()->startOfMonth();
+                $prevFrom = $today->copy()->subMonth()->startOfMonth();
+                $prevTo = $today->copy()->subMonth()->endOfMonth();
+                break;
+        }
+
+        $fromStr = $from->toDateString();
+        $prevFromStr = $prevFrom->toDateString();
+        $prevToStr = $prevTo->toDateString();
+
+        // Helper function to get period stats
+        $getStats = function (string $dateFrom, string $dateTo) use ($user) {
+            $entries = DailyEntry::query()
+                ->where('user_id', $user->id)
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->orderBy('date')
+                ->get();
+
+            $count = $entries->count();
+            $sales = (float) $entries->sum('sales');
+            $commission = (float) $entries->sum('commission');
+            $bonus = (float) $entries->sum('bonus');
+            $totalEarnings = $commission + $bonus;
+            $periodDays = (int) (Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1);
+
+            $best = $count > 0 ? $entries->sortByDesc('sales')->first() : null;
+            $worst = $count > 0 ? $entries->sortBy('sales')->first() : null;
+
+            return [
+                'totals' => [
+                    'sales' => $sales,
+                    'cash' => (float) $entries->sum('cash'),
+                    'expense' => (float) $entries->sum('expense'),
+                    'net' => (float) $entries->sum('net'),
+                    'commission' => $commission,
+                    'bonus' => $bonus,
+                    'total_earnings' => $totalEarnings,
+                    'entries' => $count,
+                ],
+                'averages' => [
+                    'daily_sales' => $count > 0 ? round($sales / $count, 2) : 0,
+                    'daily_commission' => $count > 0 ? round($commission / $count, 2) : 0,
+                    'daily_bonus' => $count > 0 ? round($bonus / $count, 2) : 0,
+                ],
+                'best_day' => $best ? [
+                    'date' => $best->date?->toDateString(),
+                    'sales' => (float) $best->sales,
+                    'net' => (float) $best->net,
+                    'commission' => (float) $best->commission,
+                ] : null,
+                'worst_day' => $worst ? [
+                    'date' => $worst->date?->toDateString(),
+                    'sales' => (float) $worst->sales,
+                    'net' => (float) $worst->net,
+                    'commission' => (float) $worst->commission,
+                ] : null,
+                'working_days' => $count,
+                'zero_days' => max($periodDays - $count, 0),
+                'period' => [
+                    'from' => $dateFrom,
+                    'to' => $dateTo,
+                    'days' => $periodDays,
+                ],
+            ];
+        };
+
+        $currentStats = $getStats($fromStr, $todayStr);
+        $previousStats = $getStats($prevFromStr, $prevToStr);
+
+        // Weekly chart data (last 7 days)
+        $weekAgo = $today->copy()->subDays(6)->toDateString();
+        $weekEntries = DailyEntry::query()
+            ->where('user_id', $user->id)
+            ->whereBetween('date', [$weekAgo, $todayStr])
+            ->get()
+            ->groupBy(fn($e) => $e->date->toDateString());
+
+        $dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+        $weeklyChart = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $d = $today->copy()->subDays($i);
+            $dateStr = $d->toDateString();
+            $dayEntries = $weekEntries->get($dateStr);
+            $weeklyChart[] = [
+                'day' => $dayNames[$d->dayOfWeek],
+                'date' => $dateStr,
+                'amount' => $dayEntries ? (float) $dayEntries->sum('sales') : 0,
+                'is_today' => $dateStr === $todayStr,
+            ];
+        }
+
+        return $this->success([
+            'current' => $currentStats,
+            'previous' => $previousStats,
+            'weekly_chart' => $weeklyChart,
+        ]);
+    }
+
+    /**
+     * GET /barber/profile
+     * Returns user info + all-time stats.
+     */
+    public function profile(Request $request)
+    {
+        $user = $request->user();
+
+        // All-time stats
+        $stats = DailyEntry::query()
+            ->where('user_id', $user->id)
+            ->selectRaw('COUNT(*) as total_entries')
+            ->selectRaw('COALESCE(SUM(sales), 0) as total_sales')
+            ->selectRaw('COALESCE(SUM(commission), 0) as total_commission')
+            ->selectRaw('COALESCE(SUM(bonus), 0) as total_bonus')
+            ->first();
+
+        $totalEarnings = (float) ($stats->total_commission ?? 0) + (float) ($stats->total_bonus ?? 0);
+
+        return $this->success([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'email' => $user->email,
+                'role' => $user->role,
+                'status' => $user->status,
+                'commission_rate' => $user->commission_rate !== null ? (float) $user->commission_rate : null,
+                'hire_date' => $user->hire_date,
+                'branch' => $user->branch ? [
+                    'id' => $user->branch->id,
+                    'name' => $user->branch->name,
+                ] : null,
+            ],
+            'stats' => [
+                'total_entries' => (int) ($stats->total_entries ?? 0),
+                'total_sales' => (float) ($stats->total_sales ?? 0),
+                'total_earnings' => $totalEarnings,
+            ],
+        ]);
+    }
 }

@@ -78,5 +78,7 @@ Route::prefix('v1')->group(function () {
         // Barber-specific endpoints (auto-scoped to authenticated user)
         Route::get('barber/dashboard', [BarberController::class, 'dashboard']);
         Route::get('barber/history', [BarberController::class, 'history']);
+        Route::get('barber/reports', [BarberController::class, 'reports']);
+        Route::get('barber/profile', [BarberController::class, 'profile']);
     });
 });
