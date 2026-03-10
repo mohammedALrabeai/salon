@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\BarberController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\DailyEntryController;
 use App\Http\Controllers\Api\V1\DayClosureController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\LedgerEntryController;
@@ -79,6 +80,7 @@ Route::prefix('v1')->group(function () {
         Route::get('reports/branches', [ReportController::class, 'branches']);
         Route::get('reports/ledger', [ReportController::class, 'ledger']);
 
+        Route::get('dashboard/overview', [DashboardController::class, 'overview']);
         Route::get('analytics/dashboard', [AnalyticsController::class, 'dashboard']);
         Route::get('analytics/compare', [AnalyticsController::class, 'compare']);
 
