@@ -14,7 +14,7 @@ class ReportController extends ApiController
 {
     public function sales(Request $request)
     {
-        $this->requirePermission('ViewAny:DailyEntry');
+        $this->requireAdminOrPermission('ViewAny:DailyEntry');
 
         $data = $request->validate([
             'date_from' => ['nullable', 'date'],
@@ -122,7 +122,7 @@ class ReportController extends ApiController
 
     public function users(Request $request)
     {
-        $this->requireAnyPermission(['ViewAny:Employee', 'ViewAny:User']);
+        $this->requireAdminOrAnyPermission(['ViewAny:Employee', 'ViewAny:User']);
 
         $data = $request->validate([
             'date_from' => ['nullable', 'date'],
@@ -193,7 +193,7 @@ class ReportController extends ApiController
 
     public function branches(Request $request)
     {
-        $this->requirePermission('ViewAny:Branch');
+        $this->requireAdminOrPermission('ViewAny:Branch');
 
         $data = $request->validate([
             'date_from' => ['nullable', 'date'],
@@ -244,7 +244,7 @@ class ReportController extends ApiController
 
     public function ledger(Request $request)
     {
-        $this->requirePermission('ViewAny:LedgerEntry');
+        $this->requireAdminOrPermission('ViewAny:LedgerEntry');
 
         $data = $request->validate([
             'party_type' => ['required', 'string', 'in:employee,branch,supplier,customer'],

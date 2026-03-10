@@ -13,7 +13,9 @@ class DailyEntryController extends ApiController
 {
     public function index(Request $request)
     {
-        $this->requirePermissionOrSelf('ViewAny:DailyEntry', $request->string('user_id')->toString() ?: null);
+        if (!$this->isAdminDashboardRole($request->user())) {
+            $this->requirePermissionOrSelf('ViewAny:DailyEntry', $request->string('user_id')->toString() ?: null);
+        }
 
         $query = DailyEntry::query()->with(['user', 'branch']);
 
@@ -91,7 +93,9 @@ class DailyEntryController extends ApiController
 
     public function store(Request $request)
     {
-        $this->requirePermissionOrSelf('Create:DailyEntry', $request->input('user_id'));
+        if (!$this->isAdminDashboardRole($request->user())) {
+            $this->requirePermissionOrSelf('Create:DailyEntry', $request->input('user_id'));
+        }
 
         $data = $request->validate([
             'user_id' => [
@@ -181,7 +185,9 @@ class DailyEntryController extends ApiController
 
     public function show(DailyEntry $dailyEntry)
     {
-        $this->requirePermissionOrSelf('View:DailyEntry', $dailyEntry->user_id);
+        if (!$this->isAdminDashboardRole(request()->user())) {
+            $this->requirePermissionOrSelf('View:DailyEntry', $dailyEntry->user_id);
+        }
 
         $dailyEntry->load(['user', 'branch', 'createdBy']);
 
@@ -225,7 +231,7 @@ class DailyEntryController extends ApiController
 
     public function update(Request $request, DailyEntry $dailyEntry)
     {
-        $this->requirePermission('Update:DailyEntry');
+        $this->requireAdminOrPermission('Update:DailyEntry');
 
         if ($dailyEntry->is_locked) {
             return $this->error('DAY_LOCKED', 'هذا اليوم مغلق ولا يمكن تعديل الإدخال', 409, [
@@ -296,7 +302,7 @@ class DailyEntryController extends ApiController
 
     public function destroy(DailyEntry $dailyEntry)
     {
-        $this->requirePermission('Delete:DailyEntry');
+        $this->requireAdminOrPermission('Delete:DailyEntry');
 
         if ($dailyEntry->is_locked) {
             return $this->error('DAY_LOCKED', 'هذا اليوم مغلق ولا يمكن حذف الإدخال', 409, [
@@ -322,7 +328,9 @@ class DailyEntryController extends ApiController
 
     public function userStats(Request $request, User $user)
     {
-        $this->requirePermissionOrSelf('ViewAny:DailyEntry', $user->id);
+        if (!$this->isAdminDashboardRole($request->user())) {
+            $this->requirePermissionOrSelf('ViewAny:DailyEntry', $user->id);
+        }
 
         $data = $request->validate([
             'date_from' => ['nullable', 'date'],
