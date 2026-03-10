@@ -67,9 +67,11 @@ Route::prefix('v1')->group(function () {
 
         Route::get('documents', [DocumentController::class, 'index']);
         Route::post('documents', [DocumentController::class, 'store']);
-        Route::put('documents/{document}', [DocumentController::class, 'update']);
-        Route::post('documents/{document}/files', [DocumentController::class, 'addFile']);
         Route::get('documents/expiring-soon', [DocumentController::class, 'expiringSoon']);
+        Route::get('documents/{document}', [DocumentController::class, 'show']);
+        Route::put('documents/{document}', [DocumentController::class, 'update']);
+        Route::delete('documents/{document}', [DocumentController::class, 'destroy']);
+        Route::post('documents/{document}/files', [DocumentController::class, 'addFile']);
 
         Route::get('notifications', [NotificationController::class, 'index']);
         Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead']);

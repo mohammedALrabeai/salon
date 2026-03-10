@@ -15,29 +15,19 @@ class AdvanceRequestController extends ApiController
 {
     public function index(Request $request)
     {
-        $this->requirePermissionOrSelf('ViewAny:AdvanceRequest', $request->string('user_id')->toString() ?: null);
-
-        $query = AdvanceRequest::query()->with(['user', 'branch']);
-
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->string('user_id'));
+        if (!$this->isAdminDashboardRole($request->user())) {
+            $this->requirePermissionOrSelf('ViewAny:AdvanceRequest', $request->string('user_id')->toString() ?: null);
         }
 
-        if ($request->filled('branch_id')) {
-            $query->where('branch_id', $request->string('branch_id'));
-        }
+        $query = $this->applyIndexFilters(AdvanceRequest::query()->with(['user', 'branch']), $request);
+        $summaryQuery = $this->applyIndexFilters(AdvanceRequest::query(), $request);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status'));
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('requested_at', '>=', $request->date('date_from'));
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('requested_at', '<=', $request->date('date_to'));
-        }
+        $stats = [
+            'pending' => (clone $summaryQuery)->where('status', 'pending')->count(),
+            'approved' => (clone $summaryQuery)->where('status', 'approved')->count(),
+            'rejected' => (clone $summaryQuery)->where('status', 'rejected')->count(),
+            'total_amount' => (float) ((clone $summaryQuery)->where('status', 'approved')->sum('amount') ?? 0),
+        ];
 
         $paginator = $query->orderByDesc('requested_at')->paginate($this->perPage());
 
@@ -57,11 +47,15 @@ class AdvanceRequestController extends ApiController
                 'reason' => $requestModel->reason,
                 'status' => $requestModel->status,
                 'requested_at' => $requestModel->requested_at?->toIso8601String(),
+                'reviewed_at' => $requestModel->processed_at?->toIso8601String(),
+                'reviewer_notes' => $requestModel->decision_notes ?? $requestModel->rejection_reason,
                 'attachment_url' => $requestModel->attachment_url,
             ];
         })->values()->all();
 
-        return $this->paginated($paginator, $items);
+        return $this->paginated($paginator, $items, [], [
+            'stats' => $stats,
+        ]);
     }
 
     public function store(Request $request)
@@ -120,7 +114,7 @@ class AdvanceRequestController extends ApiController
 
     public function approve(Request $request, AdvanceRequest $advanceRequest)
     {
-        $this->requirePermission('Update:AdvanceRequest');
+        $this->requireAdminOrPermission('Update:AdvanceRequest');
 
         if ($advanceRequest->status !== 'pending') {
             return $this->error('VALIDATION_ERROR', 'لا يمكن الموافقة على هذا الطلب', 409);
@@ -173,7 +167,7 @@ class AdvanceRequestController extends ApiController
 
     public function reject(Request $request, AdvanceRequest $advanceRequest)
     {
-        $this->requirePermission('Update:AdvanceRequest');
+        $this->requireAdminOrPermission('Update:AdvanceRequest');
 
         if ($advanceRequest->status !== 'pending') {
             return $this->error('VALIDATION_ERROR', 'لا يمكن رفض هذا الطلب', 409);
@@ -195,6 +189,31 @@ class AdvanceRequestController extends ApiController
             'status' => $advanceRequest->status,
             'processed_at' => $advanceRequest->processed_at?->toIso8601String(),
         ], 'تم رفض الطلب');
+    }
+
+    private function applyIndexFilters($query, Request $request)
+    {
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->string('user_id'));
+        }
+
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->string('branch_id'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('requested_at', '>=', $request->date('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('requested_at', '<=', $request->date('date_to'));
+        }
+
+        return $query;
     }
 
     private function storeAttachment(string $base64): ?string

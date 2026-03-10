@@ -15,60 +15,54 @@ class DocumentController extends ApiController
 {
     public function index(Request $request)
     {
-        $this->requirePermission('ViewAny:Document');
+        $this->requireAdminOrPermission('ViewAny:Document');
 
-        $query = Document::query()->withCount('files');
-
-        if ($request->filled('owner_type')) {
-            $query->where('owner_type', $request->string('owner_type'));
-        }
-
-        if ($request->filled('owner_id')) {
-            $query->where('owner_id', $request->string('owner_id'));
-        }
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->string('type'));
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status'));
-        }
-
-        if ($request->boolean('expiring_soon')) {
-            $query->whereNotNull('expiry_date')
-                ->whereDate('expiry_date', '<=', now()->addDays(30));
-        }
+        $query = $this->applyFilters(
+            Document::query()
+                ->withCount('files')
+                ->with([
+                    'files' => fn ($fileQuery) => $fileQuery
+                        ->where('is_current', true)
+                        ->orderByDesc('version'),
+                ]),
+            $request
+        );
 
         $paginator = $query->orderByDesc('created_at')->paginate($this->perPage());
         $documents = $paginator->getCollection();
         $owners = $this->resolveOwners($documents);
+        $stats = $this->buildStats($this->applyFilters(Document::query(), $request)->get());
 
-        $items = $documents->map(function (Document $document) use ($owners) {
-            $owner = $owners[$document->owner_type][$document->owner_id] ?? null;
+        $items = $documents->map(fn (Document $document) => $this->serializeDocument(
+            $document,
+            $owners[$document->owner_type][$document->owner_id] ?? null
+        ))->values()->all();
 
-            return [
-                'id' => $document->id,
-                'owner_type' => $document->owner_type,
-                'owner' => $owner,
-                'type' => $document->type,
-                'number' => $document->number,
-                'title' => $document->title,
-                'issue_date' => $document->issue_date?->toDateString(),
-                'expiry_date' => $document->expiry_date?->toDateString(),
-                'status' => $document->status,
-                'days_remaining' => $document->days_remaining,
-                'files_count' => $document->files_count,
-                'created_at' => $document->created_at?->toIso8601String(),
-            ];
-        })->values()->all();
+        return $this->paginated($paginator, $items, [], [
+            'stats' => $stats,
+        ]);
+    }
 
-        return $this->paginated($paginator, $items);
+    public function show(Document $document)
+    {
+        $this->requireAdminOrPermission('ViewAny:Document');
+
+        $document->load([
+            'files' => fn ($query) => $query->orderByDesc('version'),
+        ])->loadCount('files');
+
+        $owners = $this->resolveOwners(collect([$document]));
+
+        return $this->success($this->serializeDocument(
+            $document,
+            $owners[$document->owner_type][$document->owner_id] ?? null,
+            true
+        ));
     }
 
     public function store(Request $request)
     {
-        $this->requirePermission('Create:Document');
+        $this->requireAdminOrPermission('Create:Document');
 
         $data = $request->validate([
             'owner_type' => ['required', 'string', Rule::in(['user', 'branch', 'company'])],
@@ -129,7 +123,7 @@ class DocumentController extends ApiController
 
     public function update(Request $request, Document $document)
     {
-        $this->requirePermission('Update:Document');
+        $this->requireAdminOrPermission('Update:Document');
 
         $data = $request->validate([
             'expiry_date' => ['nullable', 'date'],
@@ -151,7 +145,7 @@ class DocumentController extends ApiController
 
     public function addFile(Request $request, Document $document)
     {
-        $this->requirePermission('Update:Document');
+        $this->requireAdminOrPermission('Update:Document');
 
         $data = $request->validate([
             'file' => ['required', 'file', 'max:5120'],
@@ -171,7 +165,7 @@ class DocumentController extends ApiController
 
     public function expiringSoon(Request $request)
     {
-        $this->requirePermission('ViewAny:Document');
+        $this->requireAdminOrPermission('ViewAny:Document');
 
         $days = (int) $request->query('days', 30);
         $days = $days < 1 ? 30 : $days;
@@ -215,6 +209,103 @@ class DocumentController extends ApiController
                 'total' => count($urgent) + count($near),
             ],
         ]);
+    }
+
+    public function destroy(Document $document)
+    {
+        $this->requireAdminOrPermission('Delete:Document');
+
+        $document->files()->delete();
+        $document->delete();
+
+        return $this->success(null, 'تم حذف الوثيقة بنجاح');
+    }
+
+    private function applyFilters($query, Request $request)
+    {
+        if ($request->filled('owner_type')) {
+            $query->where('owner_type', $request->string('owner_type'));
+        }
+
+        if ($request->filled('owner_id')) {
+            $query->where('owner_id', $request->string('owner_id'));
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->string('type'));
+        }
+
+        if ($request->boolean('expiring_soon')) {
+            $query->whereNotNull('expiry_date')
+                ->whereDate('expiry_date', '<=', now()->addDays(30));
+        }
+
+        return $query;
+    }
+
+    private function buildStats($documents): array
+    {
+        $stats = [
+            'total' => $documents->count(),
+            'safe' => 0,
+            'near' => 0,
+            'urgent' => 0,
+            'expired' => 0,
+            'expiring_soon' => 0,
+        ];
+
+        foreach ($documents as $document) {
+            $status = $document->status ?? 'safe';
+
+            if (array_key_exists($status, $stats)) {
+                $stats[$status]++;
+            }
+
+            if (in_array($status, ['near', 'urgent'], true)) {
+                $stats['expiring_soon']++;
+            }
+        }
+
+        return $stats;
+    }
+
+    private function serializeDocument(Document $document, ?array $owner, bool $includeFiles = false): array
+    {
+        $currentFile = $document->files->firstWhere('is_current', true) ?? $document->files->first();
+
+        $payload = [
+            'id' => $document->id,
+            'owner_type' => $document->owner_type,
+            'owner' => $owner,
+            'type' => $document->type,
+            'number' => $document->number,
+            'title' => $document->title,
+            'notes' => $document->notes,
+            'issue_date' => $document->issue_date?->toDateString(),
+            'expiry_date' => $document->expiry_date?->toDateString(),
+            'status' => $document->status,
+            'days_remaining' => $document->days_remaining,
+            'files_count' => $document->files_count,
+            'current_file_url' => $currentFile?->file_url,
+            'current_file_name' => $currentFile?->name,
+            'created_at' => $document->created_at?->toIso8601String(),
+        ];
+
+        if ($includeFiles) {
+            $payload['files'] = $document->files->map(function (DocumentFile $file) {
+                return [
+                    'id' => $file->id,
+                    'name' => $file->name,
+                    'size' => $file->size,
+                    'mime_type' => $file->mime_type,
+                    'file_url' => $file->file_url,
+                    'is_current' => $file->is_current,
+                    'uploaded_at' => $file->uploaded_at?->toIso8601String(),
+                ];
+            })->values()->all();
+        }
+
+        return $payload;
     }
 
     private function storeDocumentFile(Document $document, $file, string $userId): DocumentFile

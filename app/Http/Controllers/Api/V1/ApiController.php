@@ -10,6 +10,11 @@ use Illuminate\Http\JsonResponse;
 
 abstract class ApiController extends Controller
 {
+    protected function isAdminDashboardRole($user): bool
+    {
+        return in_array($user?->role, ['super_admin', 'owner', 'manager'], true);
+    }
+
     protected function isSuperAdmin($user): bool
     {
         return $user?->role === 'super_admin';
@@ -43,6 +48,17 @@ abstract class ApiController extends Controller
         }
     }
 
+    protected function requireAdminOrPermission(string $permission): void
+    {
+        $user = request()->user();
+
+        if ($this->isAdminDashboardRole($user)) {
+            return;
+        }
+
+        $this->requirePermission($permission);
+    }
+
     /**
      * Allow access if the current user has any permission from the provided set.
      */
@@ -65,6 +81,17 @@ abstract class ApiController extends Controller
         }
 
         throw new PermissionDeniedException(implode(' | ', $permissions), $user->role);
+    }
+
+    protected function requireAdminOrAnyPermission(array $permissions): void
+    {
+        $user = request()->user();
+
+        if ($this->isAdminDashboardRole($user)) {
+            return;
+        }
+
+        $this->requireAnyPermission($permissions);
     }
 
     /**
