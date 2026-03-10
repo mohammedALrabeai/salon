@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\DailyEntryController;
 use App\Http\Controllers\Api\V1\DayClosureController;
 use App\Http\Controllers\Api\V1\DocumentController;
+use App\Http\Controllers\Api\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\LedgerEntryController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ReportController;
@@ -30,9 +31,17 @@ Route::prefix('v1')->group(function () {
         Route::delete('users/{user}', [UserController::class, 'destroy']);
         Route::post('users/{user}/change-password', [UserController::class, 'changePassword']);
 
+        Route::get('employees', [EmployeeController::class, 'index']);
+        Route::post('employees', [EmployeeController::class, 'store']);
+        Route::get('employees/{employee}', [EmployeeController::class, 'show']);
+        Route::put('employees/{employee}', [EmployeeController::class, 'update']);
+        Route::delete('employees/{employee}', [EmployeeController::class, 'destroy']);
+
         Route::get('branches', [BranchController::class, 'index']);
         Route::post('branches', [BranchController::class, 'store']);
         Route::get('branches/{branch}', [BranchController::class, 'show']);
+        Route::put('branches/{branch}', [BranchController::class, 'update']);
+        Route::delete('branches/{branch}', [BranchController::class, 'destroy']);
 
         Route::get('daily-entries', [DailyEntryController::class, 'index']);
         Route::post('daily-entries', [DailyEntryController::class, 'store']);

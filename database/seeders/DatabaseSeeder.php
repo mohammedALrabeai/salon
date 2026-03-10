@@ -89,6 +89,7 @@ class DatabaseSeeder extends Seeder
             'Delete:User',
             'Update:Branch',
             'Create:Branch',
+            'Delete:Branch',
             'Delete:DayClosure',
             'Delete:AdvanceRequest',
             'ViewAny:Activity',
@@ -97,6 +98,14 @@ class DatabaseSeeder extends Seeder
             'View:Role',
         ]);
 
+        $employeePermissions = [
+            'ViewAny:Employee',
+            'View:Employee',
+            'Create:Employee',
+            'Update:Employee',
+            'Delete:Employee',
+        ];
+
         // Ensure permissions exist before assigning
         $allPermissions = \Spatie\Permission\Models\Permission::pluck('name')->toArray();
 
@@ -104,10 +113,13 @@ class DatabaseSeeder extends Seeder
         $barberRole->syncPermissions(array_intersect($barberPermissions, $allPermissions));
 
         $managerRole = Role::findByName('manager', 'web');
-        $managerRole->syncPermissions(array_intersect($managerPermissions, $allPermissions));
+        $managerRole->syncPermissions(array_intersect(array_merge($managerPermissions, $employeePermissions), $allPermissions));
 
         $ownerRole = Role::findByName('owner', 'web');
-        $ownerRole->syncPermissions(array_intersect($ownerPermissions, $allPermissions));
+        $ownerRole->syncPermissions(array_intersect(array_merge($ownerPermissions, $employeePermissions), $allPermissions));
+
+        $superAdminRole = Role::findByName('super_admin', 'web');
+        $superAdminRole->syncPermissions($allPermissions);
 
         // Receptionist gets similar to barber
         $receptionistRole = Role::findByName('receptionist', 'web');

@@ -84,6 +84,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'Delete:User',
             'Update:Branch',
             'Create:Branch',
+            'Delete:Branch',
             'Delete:DayClosure',
             'Delete:AdvanceRequest',
             'ViewAny:Activity',
@@ -91,6 +92,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'ViewAny:Role',
             'View:Role',
         ]);
+
+        $employeePermissions = [
+            'ViewAny:Employee',
+            'View:Employee',
+            'Create:Employee',
+            'Update:Employee',
+            'Delete:Employee',
+        ];
 
         $accountantPermissions = [
             'ViewAny:DailyEntry',
@@ -113,9 +122,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'Update:Notification',
         ];
 
+        Role::findByName('super_admin', 'web')->syncPermissions($allPermissions);
         Role::findByName('barber', 'web')->syncPermissions(array_intersect($barberPermissions, $allPermissions));
-        Role::findByName('manager', 'web')->syncPermissions(array_intersect($managerPermissions, $allPermissions));
-        Role::findByName('owner', 'web')->syncPermissions(array_intersect($ownerPermissions, $allPermissions));
+        Role::findByName('manager', 'web')->syncPermissions(array_intersect(array_merge($managerPermissions, $employeePermissions), $allPermissions));
+        Role::findByName('owner', 'web')->syncPermissions(array_intersect(array_merge($ownerPermissions, $employeePermissions), $allPermissions));
         Role::findByName('accountant', 'web')->syncPermissions(array_intersect($accountantPermissions, $allPermissions));
         Role::findByName('receptionist', 'web')->syncPermissions(array_intersect($barberPermissions, $allPermissions));
 

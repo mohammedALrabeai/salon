@@ -122,7 +122,7 @@ class ReportController extends ApiController
 
     public function users(Request $request)
     {
-        $this->requirePermission('ViewAny:Employee');
+        $this->requireAnyPermission(['ViewAny:Employee', 'ViewAny:User']);
 
         $data = $request->validate([
             'date_from' => ['nullable', 'date'],

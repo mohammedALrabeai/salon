@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\ApiTokenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
 
 class AuthController extends ApiController
 {
@@ -90,7 +91,7 @@ class AuthController extends ApiController
                 'expires_in' => $tokenPayload['expires_in'],
                 'expires_at' => $tokenPayload['expires_at'],
             ],
-            'permissions' => $user->getAllPermissions()->pluck('name')->values(),
+            'permissions' => $this->resolvePermissions($user),
         ], 'تم تسجيل الدخول بنجاح');
     }
 
@@ -183,5 +184,20 @@ class AuthController extends ApiController
                 'locked_until' => now()->addMinutes($lockMinutes),
             ])->save();
         }
+    }
+
+    private function resolvePermissions(User $user): array
+    {
+        if ($user->role === 'super_admin') {
+            return Permission::query()
+                ->pluck('name')
+                ->values()
+                ->all();
+        }
+
+        return $user->getAllPermissions()
+            ->pluck('name')
+            ->values()
+            ->all();
     }
 }

@@ -10,6 +10,11 @@ use Illuminate\Http\JsonResponse;
 
 abstract class ApiController extends Controller
 {
+    protected function isSuperAdmin($user): bool
+    {
+        return $user?->role === 'super_admin';
+    }
+
     protected function success(mixed $data = null, ?string $message = null, int $status = 200): JsonResponse
     {
         return ApiResponse::success($data, $message, $status);
@@ -29,9 +34,37 @@ abstract class ApiController extends Controller
     {
         $user = request()->user();
 
+        if ($this->isSuperAdmin($user)) {
+            return;
+        }
+
         if (!$user || !$user->can($permission)) {
             throw new PermissionDeniedException($permission, $user?->role);
         }
+    }
+
+    /**
+     * Allow access if the current user has any permission from the provided set.
+     */
+    protected function requireAnyPermission(array $permissions): void
+    {
+        $user = request()->user();
+
+        if ($this->isSuperAdmin($user)) {
+            return;
+        }
+
+        if (!$user) {
+            throw new PermissionDeniedException(implode(' | ', $permissions), null);
+        }
+
+        foreach ($permissions as $permission) {
+            if ($user->can($permission)) {
+                return;
+            }
+        }
+
+        throw new PermissionDeniedException(implode(' | ', $permissions), $user->role);
     }
 
     /**
@@ -46,6 +79,10 @@ abstract class ApiController extends Controller
             throw new PermissionDeniedException($permission, null);
         }
 
+        if ($this->isSuperAdmin($user)) {
+            return;
+        }
+
         // If user is an employee role and accessing their own data, allow it
         if ($resourceUserId && $user->id === $resourceUserId && in_array($user->role, \App\Models\User::employeeRoles())) {
             return;
@@ -54,6 +91,35 @@ abstract class ApiController extends Controller
         if (!$user->can($permission)) {
             throw new PermissionDeniedException($permission, $user->role);
         }
+    }
+
+    /**
+     * Allow access if the user is the resource owner or has any permission
+     * from the provided set.
+     */
+    protected function requireAnyPermissionOrSelf(array $permissions, ?string $resourceUserId = null): void
+    {
+        $user = request()->user();
+
+        if (!$user) {
+            throw new PermissionDeniedException(implode(' | ', $permissions), null);
+        }
+
+        if ($this->isSuperAdmin($user)) {
+            return;
+        }
+
+        if ($resourceUserId && $user->id === $resourceUserId && in_array($user->role, \App\Models\User::employeeRoles(), true)) {
+            return;
+        }
+
+        foreach ($permissions as $permission) {
+            if ($user->can($permission)) {
+                return;
+            }
+        }
+
+        throw new PermissionDeniedException(implode(' | ', $permissions), $user->role);
     }
 
     protected function perPage(): int

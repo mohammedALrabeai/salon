@@ -48,27 +48,10 @@ class BranchController extends ApiController
             ->groupBy('branch_id')
             ->pluck('total_sales', 'branch_id');
 
-        $items = $paginator->getCollection()->map(function (Branch $branch) use ($todaySales, $monthSales) {
-            return [
-                'id' => $branch->id,
-                'name' => $branch->name,
-                'code' => $branch->code,
-                'city' => $branch->city,
-                'address' => $branch->address,
-                'phone' => $branch->phone,
-                'manager' => $branch->manager ? [
-                    'id' => $branch->manager->id,
-                    'name' => $branch->manager->name,
-                ] : null,
-                'status' => $branch->status,
-                'employees_count' => $branch->employees_count,
-                'stats' => [
-                    'today_sales' => (float) ($todaySales[$branch->id] ?? 0),
-                    'month_sales' => (float) ($monthSales[$branch->id] ?? 0),
-                ],
-                'created_at' => $branch->created_at?->toIso8601String(),
-            ];
-        })->values()->all();
+        $items = $paginator->getCollection()
+            ->map(fn(Branch $branch) => $this->serializeBranchSummary($branch, $todaySales, $monthSales))
+            ->values()
+            ->all();
 
         return $this->paginated($paginator, $items);
     }
@@ -104,6 +87,59 @@ class BranchController extends ApiController
             'code' => $branch->code,
             'created_at' => $branch->created_at?->toIso8601String(),
         ], 'تم إنشاء الفرع بنجاح', 201);
+    }
+
+    public function update(Request $request, Branch $branch)
+    {
+        $this->requirePermission('Update:Branch');
+
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:100'],
+            'code' => ['nullable', 'string', 'max:20', Rule::unique('branches', 'code')->ignore($branch->id)],
+            'city' => ['nullable', 'string', 'max:50'],
+            'region' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'email' => ['nullable', 'email', 'max:100'],
+            'manager_id' => ['nullable', 'uuid', 'exists:users,id'],
+            'opening_time' => ['nullable', 'date_format:H:i'],
+            'closing_time' => ['nullable', 'date_format:H:i'],
+            'working_days' => ['nullable', 'array'],
+            'status' => ['nullable', Rule::in(['active', 'inactive', 'maintenance'])],
+        ]);
+
+        $branch->forceFill($data);
+        $branch->updated_by = $request->user()->id;
+        $branch->save();
+        $branch->load('manager');
+        $branch->loadCount('employees');
+
+        $today = now()->toDateString();
+        $monthStart = now()->startOfMonth()->toDateString();
+
+        $todaySales = DailyEntry::query()
+            ->where('branch_id', $branch->id)
+            ->whereDate('date', $today)
+            ->sum('sales');
+
+        $monthSales = DailyEntry::query()
+            ->where('branch_id', $branch->id)
+            ->whereBetween('date', [$monthStart, $today])
+            ->sum('sales');
+
+        return $this->success(
+            $this->serializeBranchSummary($branch, [$branch->id => $todaySales], [$branch->id => $monthSales]),
+            'تم تحديث بيانات الفرع بنجاح'
+        );
+    }
+
+    public function destroy(Branch $branch)
+    {
+        $this->requirePermission('Delete:Branch');
+
+        $branch->delete();
+
+        return $this->success(null, 'تم حذف الفرع بنجاح');
     }
 
     public function show(Branch $branch)
@@ -166,5 +202,29 @@ class BranchController extends ApiController
             'created_at' => $branch->created_at?->toIso8601String(),
             'updated_at' => $branch->updated_at?->toIso8601String(),
         ]);
+    }
+
+    private function serializeBranchSummary(Branch $branch, $todaySales, $monthSales): array
+    {
+        return [
+            'id' => $branch->id,
+            'name' => $branch->name,
+            'code' => $branch->code,
+            'city' => $branch->city,
+            'address' => $branch->address,
+            'phone' => $branch->phone,
+            'manager' => $branch->manager ? [
+                'id' => $branch->manager->id,
+                'name' => $branch->manager->name,
+            ] : null,
+            'status' => $branch->status,
+            'employees_count' => $branch->employees_count,
+            'stats' => [
+                'today_sales' => (float) ($todaySales[$branch->id] ?? 0),
+                'month_sales' => (float) ($monthSales[$branch->id] ?? 0),
+            ],
+            'created_at' => $branch->created_at?->toIso8601String(),
+            'updated_at' => $branch->updated_at?->toIso8601String(),
+        ];
     }
 }
