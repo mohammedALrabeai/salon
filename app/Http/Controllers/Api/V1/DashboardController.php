@@ -155,9 +155,11 @@ class DashboardController extends ApiController
     {
         $start = $today->copy()->subDays(6);
         $driver = DB::getDriverName();
-        $dateExpression = $driver === 'pgsql'
-            ? "to_char(date, 'YYYY-MM-DD')"
-            : "DATE_FORMAT(date, '%Y-%m-%d')";
+        $dateExpression = match ($driver) {
+            'pgsql' => "to_char(date, 'YYYY-MM-DD')",
+            'sqlite' => "strftime('%Y-%m-%d', date)",
+            default => "DATE_FORMAT(date, '%Y-%m-%d')",
+        };
 
         $rows = DailyEntry::query()
             ->whereBetween('date', [$start->toDateString(), $today->toDateString()])

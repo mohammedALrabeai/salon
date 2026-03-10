@@ -203,9 +203,11 @@ class AnalyticsController extends ApiController
         $driver = DB::getDriverName();
 
         if ($period === 'today') {
-            $hourExpression = $driver === 'pgsql'
-                ? "to_char(created_at, 'HH24:00')"
-                : "DATE_FORMAT(created_at, '%H:00')";
+            $hourExpression = match ($driver) {
+                'pgsql' => "to_char(created_at, 'HH24:00')",
+                'sqlite' => "strftime('%H:00', created_at)",
+                default => "DATE_FORMAT(created_at, '%H:00')",
+            };
 
             $rows = (clone $query)
                 ->selectRaw("{$hourExpression} as bucket")
@@ -222,9 +224,11 @@ class AnalyticsController extends ApiController
             })->values()->all();
         }
 
-        $dateExpression = $driver === 'pgsql'
-            ? "to_char(date, 'YYYY-MM-DD')"
-            : "DATE_FORMAT(date, '%Y-%m-%d')";
+        $dateExpression = match ($driver) {
+            'pgsql' => "to_char(date, 'YYYY-MM-DD')",
+            'sqlite' => "strftime('%Y-%m-%d', date)",
+            default => "DATE_FORMAT(date, '%Y-%m-%d')",
+        };
 
         $rows = (clone $query)
             ->selectRaw("{$dateExpression} as bucket")

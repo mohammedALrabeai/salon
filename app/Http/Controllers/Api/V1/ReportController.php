@@ -324,8 +324,16 @@ class ReportController extends ApiController
     {
         $driver = DB::getDriverName();
         $periodExpression = $groupBy === 'month'
-            ? ($driver === 'pgsql' ? "to_char(date, 'YYYY-MM')" : "DATE_FORMAT(date, '%Y-%m')")
-            : ($driver === 'pgsql' ? "to_char(date, 'YYYY-MM-DD')" : "DATE_FORMAT(date, '%Y-%m-%d')");
+            ? match ($driver) {
+                'pgsql' => "to_char(date, 'YYYY-MM')",
+                'sqlite' => "strftime('%Y-%m', date)",
+                default => "DATE_FORMAT(date, '%Y-%m')",
+            }
+            : match ($driver) {
+                'pgsql' => "to_char(date, 'YYYY-MM-DD')",
+                'sqlite' => "strftime('%Y-%m-%d', date)",
+                default => "DATE_FORMAT(date, '%Y-%m-%d')",
+            };
 
         $rows = (clone $query)
             ->selectRaw("{$periodExpression} as period")
