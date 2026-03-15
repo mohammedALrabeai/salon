@@ -44,6 +44,9 @@ class ReportController extends ApiController
             ->selectRaw('COALESCE(SUM(commission), 0) as total_commission')
             ->selectRaw('COALESCE(SUM(bonus), 0) as total_bonus')
             ->selectRaw('COUNT(*) as entries_count')
+            ->selectRaw("COALESCE(SUM(CASE WHEN payment_type = 'cash' THEN sales ELSE 0 END), 0) as total_cash_payments")
+            ->selectRaw("COALESCE(SUM(CASE WHEN payment_type = 'network' THEN sales ELSE 0 END), 0) as total_network_payments")
+            ->selectRaw("COALESCE(SUM(CASE WHEN payment_type = 'purchases' THEN sales ELSE 0 END), 0) as total_purchases_payments")
             ->first();
 
         $periodDays = $this->countDays($from, $to);
@@ -113,6 +116,11 @@ class ReportController extends ApiController
                 'total_bonus' => (float) ($summary->total_bonus ?? 0),
                 'entries_count' => (int) ($summary->entries_count ?? 0),
                 'avg_daily_sales' => $avgDailySales,
+                'payment_type_breakdown' => [
+                    'cash' => (float) ($summary->total_cash_payments ?? 0),
+                    'network' => (float) ($summary->total_network_payments ?? 0),
+                    'purchases' => (float) ($summary->total_purchases_payments ?? 0),
+                ],
             ],
             'chart_data' => $chartData,
             'top_employees' => $topEmployees,

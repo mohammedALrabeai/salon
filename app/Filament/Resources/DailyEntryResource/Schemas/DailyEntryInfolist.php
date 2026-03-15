@@ -41,12 +41,22 @@ class DailyEntryInfolist
                             ->label(__('daily_entries.fields.expense'))
                             ->numeric(decimalPlaces: 2)
                             ->suffix(' SAR'),
+                        TextEntry::make('payment_type')
+                            ->label(__('daily_entries.fields.payment_type'))
+                            ->badge()
+                            ->formatStateUsing(fn(?string $state): string => self::paymentTypeLabel($state))
+                            ->color(fn(?string $state): string => match ($state) {
+                                'cash' => 'success',
+                                'network' => 'info',
+                                'purchases' => 'warning',
+                                default => 'gray',
+                            }),
                         TextEntry::make('net')
                             ->label(__('daily_entries.fields.net'))
                             ->numeric(decimalPlaces: 2)
                             ->suffix(' SAR'),
                     ])
-                    ->columns(4),
+                    ->columns(5),
                 Section::make(__('daily_entries.sections.commission'))
                     ->schema([
                         TextEntry::make('commission_rate')
@@ -131,5 +141,22 @@ class DailyEntryInfolist
     private static function sourceLabel(?string $state): string
     {
         return self::sourceOptions()[$state] ?? (string) $state;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function paymentTypeOptions(): array
+    {
+        return [
+            'cash' => __('daily_entries.payment_type.cash'),
+            'network' => __('daily_entries.payment_type.network'),
+            'purchases' => __('daily_entries.payment_type.purchases'),
+        ];
+    }
+
+    private static function paymentTypeLabel(?string $state): string
+    {
+        return self::paymentTypeOptions()[$state] ?? (string) $state;
     }
 }

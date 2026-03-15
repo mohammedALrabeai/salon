@@ -14,6 +14,16 @@ class DailyEntry extends Model
 {
     use HasFactory, HasUuids, LogsModelActivity, SoftDeletes;
 
+    public const PAYMENT_TYPE_CASH = 'cash';
+    public const PAYMENT_TYPE_NETWORK = 'network';
+    public const PAYMENT_TYPE_PURCHASES = 'purchases';
+
+    public const PAYMENT_TYPES = [
+        self::PAYMENT_TYPE_CASH,
+        self::PAYMENT_TYPE_NETWORK,
+        self::PAYMENT_TYPE_PURCHASES,
+    ];
+
     protected $fillable = [
         'branch_id',
         'user_id',
@@ -21,6 +31,7 @@ class DailyEntry extends Model
         'sales',
         'cash',
         'expense',
+        'payment_type',
         'commission',
         'commission_rate',
         'bonus',
@@ -42,6 +53,7 @@ class DailyEntry extends Model
             'sales' => 'decimal:2',
             'cash' => 'decimal:2',
             'expense' => 'decimal:2',
+            'payment_type' => 'string',
             'net' => 'decimal:2',
             'commission' => 'decimal:2',
             'bonus' => 'decimal:2',

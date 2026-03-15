@@ -29,6 +29,7 @@ return [
         'bonus' => 'Bonus',
         'bonus_reason' => 'Bonus Reason',
         'note' => 'Notes',
+        'payment_type' => 'Payment Type',
         'transactions_count' => 'Transactions Count',
         'is_locked' => 'Locked',
         'locked_at' => 'Locked At',
@@ -43,6 +44,11 @@ return [
         'web' => 'Web',
         'mobile' => 'Mobile',
         'api' => 'API',
+    ],
+    'payment_type' => [
+        'cash' => 'Cash',
+        'network' => 'Network',
+        'purchases' => 'Purchases',
     ],
     'locked' => [
         'yes' => 'Locked',

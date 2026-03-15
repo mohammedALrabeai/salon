@@ -29,6 +29,7 @@ return [
         'bonus' => 'المكافأة',
         'bonus_reason' => 'سبب المكافأة',
         'note' => 'ملاحظات',
+        'payment_type' => 'طريقة الدفع',
         'transactions_count' => 'عدد العمليات',
         'is_locked' => 'مغلق',
         'locked_at' => 'تاريخ الإغلاق',
@@ -43,6 +44,11 @@ return [
         'web' => 'ويب',
         'mobile' => 'جوال',
         'api' => 'واجهة برمجة',
+    ],
+    'payment_type' => [
+        'cash' => 'كاش',
+        'network' => 'شبكة',
+        'purchases' => 'مشتريات',
     ],
     'locked' => [
         'yes' => 'مغلق',

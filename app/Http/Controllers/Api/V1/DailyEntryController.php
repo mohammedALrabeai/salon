@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class DailyEntryController extends ApiController
 {
@@ -39,6 +40,10 @@ class DailyEntryController extends ApiController
             $query->where('is_locked', $request->boolean('is_locked'));
         }
 
+        if ($request->filled('payment_type')) {
+            $query->where('payment_type', $request->string('payment_type'));
+        }
+
         $paginator = $query->orderByDesc('date')->paginate($this->perPage());
 
         $summary = (clone $query)
@@ -49,6 +54,9 @@ class DailyEntryController extends ApiController
             ->selectRaw('COALESCE(SUM(commission), 0) as total_commission')
             ->selectRaw('COALESCE(SUM(bonus), 0) as total_bonus')
             ->selectRaw('COUNT(*) as entries_count')
+            ->selectRaw("COALESCE(SUM(CASE WHEN payment_type = 'cash' THEN sales ELSE 0 END), 0) as total_cash_payments")
+            ->selectRaw("COALESCE(SUM(CASE WHEN payment_type = 'network' THEN sales ELSE 0 END), 0) as total_network_payments")
+            ->selectRaw("COALESCE(SUM(CASE WHEN payment_type = 'purchases' THEN sales ELSE 0 END), 0) as total_purchases_payments")
             ->first();
 
         $items = $paginator->getCollection()->map(function (DailyEntry $entry) {
@@ -72,6 +80,7 @@ class DailyEntryController extends ApiController
                 'bonus' => (float) $entry->bonus,
                 'note' => $entry->note,
                 'transactions_count' => (int) $entry->transactions_count,
+                'payment_type' => $entry->payment_type ?? 'cash',
                 'is_locked' => (bool) $entry->is_locked,
                 'source' => $entry->source,
                 'created_at' => $entry->created_at?->toIso8601String(),
@@ -87,6 +96,9 @@ class DailyEntryController extends ApiController
                 'total_commission' => (float) ($summary->total_commission ?? 0),
                 'total_bonus' => (float) ($summary->total_bonus ?? 0),
                 'entries_count' => (int) ($summary->entries_count ?? 0),
+                'total_cash_payments' => (float) ($summary->total_cash_payments ?? 0),
+                'total_network_payments' => (float) ($summary->total_network_payments ?? 0),
+                'total_purchases_payments' => (float) ($summary->total_purchases_payments ?? 0),
             ],
         ]);
     }
@@ -113,6 +125,7 @@ class DailyEntryController extends ApiController
             'bonus_reason' => ['nullable', 'string'],
             'note' => ['nullable', 'string'],
             'transactions_count' => ['nullable', 'integer', 'min:0'],
+            'payment_type' => ['nullable', 'string', Rule::in(DailyEntry::PAYMENT_TYPES)],
         ]);
 
         $closed = DayClosure::query()
@@ -155,6 +168,7 @@ class DailyEntryController extends ApiController
             'sales' => $sales,
             'cash' => (float) ($data['cash'] ?? 0),
             'expense' => (float) ($data['expense'] ?? 0),
+            'payment_type' => $data['payment_type'] ?? 'cash',
             'commission_rate' => $commissionRate,
             'commission' => $commission,
             'bonus' => (float) ($data['bonus'] ?? 0),
@@ -175,6 +189,7 @@ class DailyEntryController extends ApiController
             'sales' => (float) $entry->sales,
             'cash' => (float) $entry->cash,
             'expense' => (float) $entry->expense,
+            'payment_type' => $entry->payment_type,
             'net' => (float) $net,
             'commission' => (float) $entry->commission,
             'bonus' => (float) $entry->bonus,
@@ -210,6 +225,7 @@ class DailyEntryController extends ApiController
             'sales' => (float) $dailyEntry->sales,
             'cash' => (float) $dailyEntry->cash,
             'expense' => (float) $dailyEntry->expense,
+            'payment_type' => $dailyEntry->payment_type ?? 'cash',
             'net' => (float) $dailyEntry->net,
             'commission' => (float) $dailyEntry->commission,
             'commission_rate' => $dailyEntry->commission_rate !== null ? (float) $dailyEntry->commission_rate : null,
@@ -256,6 +272,7 @@ class DailyEntryController extends ApiController
             'sales' => ['nullable', 'numeric', 'min:0'],
             'cash' => ['nullable', 'numeric', 'min:0'],
             'expense' => ['nullable', 'numeric', 'min:0'],
+            'payment_type' => ['nullable', 'string', Rule::in(DailyEntry::PAYMENT_TYPES)],
             'commission_rate' => ['nullable', 'numeric', 'min:0'],
             'bonus' => ['nullable', 'numeric', 'min:0'],
             'bonus_reason' => ['nullable', 'string'],
@@ -273,6 +290,7 @@ class DailyEntryController extends ApiController
             'sales' => $sales,
             'cash' => array_key_exists('cash', $data) ? (float) $data['cash'] : $dailyEntry->cash,
             'expense' => array_key_exists('expense', $data) ? (float) $data['expense'] : $dailyEntry->expense,
+            'payment_type' => $data['payment_type'] ?? $dailyEntry->payment_type,
             'commission_rate' => $commissionRate,
             'commission' => $commission,
             'bonus' => array_key_exists('bonus', $data) ? (float) $data['bonus'] : $dailyEntry->bonus,
@@ -292,6 +310,7 @@ class DailyEntryController extends ApiController
             'sales' => (float) $dailyEntry->sales,
             'cash' => (float) $dailyEntry->cash,
             'expense' => (float) $dailyEntry->expense,
+            'payment_type' => $dailyEntry->payment_type,
             'net' => (float) $net,
             'commission' => (float) $dailyEntry->commission,
             'bonus' => (float) $dailyEntry->bonus,

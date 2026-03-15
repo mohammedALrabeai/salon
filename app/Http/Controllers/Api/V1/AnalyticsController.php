@@ -61,12 +61,26 @@ class AnalyticsController extends ApiController
             ->values()
             ->all();
 
+        // Payment type breakdown
+        $paymentBreakdown = (clone $query)
+            ->select('payment_type', DB::raw('COALESCE(SUM(sales), 0) as total_sales'), DB::raw('COUNT(*) as entries_count'))
+            ->groupBy('payment_type')
+            ->get()
+            ->mapWithKeys(function ($row) {
+                return [$row->payment_type ?? 'cash' => [
+                    'total_sales' => (float) $row->total_sales,
+                    'entries_count' => (int) $row->entries_count,
+                ]];
+            })
+            ->all();
+
         return $this->success([
             'period' => $period,
             'date' => $to,
             'kpis' => $kpis,
             'chart' => $chart,
             'top_performers' => $topPerformers,
+            'payment_type_breakdown' => $paymentBreakdown,
         ]);
     }
 

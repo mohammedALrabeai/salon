@@ -95,8 +95,13 @@ class DailyEntryForm
                                 2,
                                 locale: app()->getLocale()
                             ) . ' SAR'),
+                        Select::make('payment_type')
+                            ->label(__('daily_entries.fields.payment_type'))
+                            ->options(self::paymentTypeOptions())
+                            ->required()
+                            ->default('cash'),
                     ])
-                    ->columns(4),
+                    ->columns(5),
                 Section::make(__('daily_entries.sections.commission'))
                     ->schema([
                         TextInput::make('commission_rate')
@@ -159,6 +164,18 @@ class DailyEntryForm
             'web' => __('daily_entries.source.web'),
             'mobile' => __('daily_entries.source.mobile'),
             'api' => __('daily_entries.source.api'),
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function paymentTypeOptions(): array
+    {
+        return [
+            'cash' => __('daily_entries.payment_type.cash'),
+            'network' => __('daily_entries.payment_type.network'),
+            'purchases' => __('daily_entries.payment_type.purchases'),
         ];
     }
 }

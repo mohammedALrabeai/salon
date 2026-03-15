@@ -71,6 +71,18 @@ class DailyEntryTable
                     ->numeric(decimalPlaces: 2)
                     ->suffix(' SAR')
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('payment_type')
+                    ->label(__('daily_entries.fields.payment_type'))
+                    ->formatStateUsing(fn(?string $state): string => self::paymentTypeLabel($state))
+                    ->badge()
+                    ->color(fn(?string $state): string => match ($state) {
+                        'cash' => 'success',
+                        'network' => 'info',
+                        'purchases' => 'warning',
+                        default => 'gray',
+                    })
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('source')
                     ->label(__('daily_entries.fields.source'))
                     ->formatStateUsing(fn(?string $state): string => self::sourceLabel($state))
@@ -106,6 +118,9 @@ class DailyEntryTable
                 SelectFilter::make('user_id')
                     ->label(__('daily_entries.fields.user_id'))
                     ->relationship('user', 'name'),
+                SelectFilter::make('payment_type')
+                    ->label(__('daily_entries.fields.payment_type'))
+                    ->options(self::paymentTypeOptions()),
                 SelectFilter::make('source')
                     ->label(__('daily_entries.fields.source'))
                     ->options(self::sourceOptions()),
@@ -161,6 +176,23 @@ class DailyEntryTable
     private static function sourceLabel(?string $state): string
     {
         return self::sourceOptions()[$state] ?? (string) $state;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function paymentTypeOptions(): array
+    {
+        return [
+            'cash' => __('daily_entries.payment_type.cash'),
+            'network' => __('daily_entries.payment_type.network'),
+            'purchases' => __('daily_entries.payment_type.purchases'),
+        ];
+    }
+
+    private static function paymentTypeLabel(?string $state): string
+    {
+        return self::paymentTypeOptions()[$state] ?? (string) $state;
     }
 
     private static function lockEntry(DailyEntry $record): void
