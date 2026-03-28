@@ -77,6 +77,7 @@ Route::prefix('v1')->group(function () {
         Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
 
+        Route::get('reports/overview', [ReportController::class, 'overview']);
         Route::get('reports/sales', [ReportController::class, 'sales']);
         Route::get('reports/users', [ReportController::class, 'users']);
         Route::get('reports/branches', [ReportController::class, 'branches']);
