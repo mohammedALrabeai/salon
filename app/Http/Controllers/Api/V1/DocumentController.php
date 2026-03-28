@@ -126,6 +126,10 @@ class DocumentController extends ApiController
         $this->requireAdminOrPermission('Update:Document');
 
         $data = $request->validate([
+            'type' => ['sometimes', 'string', 'max:50'],
+            'number' => ['nullable', 'string', 'max:50'],
+            'title' => ['nullable', 'string', 'max:200'],
+            'issue_date' => ['nullable', 'date'],
             'expiry_date' => ['nullable', 'date'],
             'notify_before_days' => ['nullable', 'integer', 'min:1'],
             'notes' => ['nullable', 'string'],
