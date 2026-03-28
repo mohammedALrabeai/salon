@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Branch;
-use App\Models\User;
 use App\Models\LedgerEntry;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class LedgerEntryController extends ApiController
 {
     public function index(Request $request)
     {
-        $this->requirePermissionOrSelf('ViewAny:LedgerEntry', $request->string('party_id')->toString() ?: null);
+        $this->requireAdminOrPermission('ViewAny:LedgerEntry');
 
         $query = LedgerEntry::query()->with('createdBy');
 
@@ -59,6 +59,7 @@ class LedgerEntryController extends ApiController
                 'id' => $entry->id,
                 'date' => $entry->date?->toDateString(),
                 'party_type' => $entry->party_type,
+                'party_id' => $entry->party_id,
                 'party' => $party,
                 'type' => $entry->type,
                 'amount' => (float) $entry->amount,
@@ -88,10 +89,10 @@ class LedgerEntryController extends ApiController
 
     public function store(Request $request)
     {
-        $this->requirePermission('Create:LedgerEntry');
+        $this->requireAdminOrPermission('Create:LedgerEntry');
 
         $data = $request->validate([
-            'party_type' => ['required', 'string', 'in:user,branch,supplier,customer'],
+            'party_type' => ['required', 'string', 'in:user,branch'],
             'party_id' => ['required', 'uuid'],
             'date' => ['required', 'date'],
             'type' => ['required', 'string', 'in:debit,credit'],
@@ -101,13 +102,7 @@ class LedgerEntryController extends ApiController
             'payment_method' => ['nullable', 'string', 'in:cash,bank_transfer,check,other'],
         ]);
 
-        if ($data['party_type'] === 'user' && !User::query()->whereKey($data['party_id'])->exists()) {
-            return $this->error('VALIDATION_ERROR', 'الطرف غير موجود', 422);
-        }
-
-        if ($data['party_type'] === 'branch' && !Branch::query()->whereKey($data['party_id'])->exists()) {
-            return $this->error('VALIDATION_ERROR', 'الطرف غير موجود', 422);
-        }
+        $this->validatePartyExists($data['party_type'], $data['party_id']);
 
         $entry = LedgerEntry::create([
             'party_type' => $data['party_type'],
@@ -129,6 +124,8 @@ class LedgerEntryController extends ApiController
         return $this->success([
             'id' => $entry->id,
             'date' => $entry->date?->toDateString(),
+            'party_type' => $entry->party_type,
+            'party_id' => $entry->party_id,
             'type' => $entry->type,
             'amount' => (float) $entry->amount,
             'new_balance' => $balance['balance'],
@@ -136,11 +133,81 @@ class LedgerEntryController extends ApiController
         ], 'تم إضافة القيد بنجاح', 201);
     }
 
+    public function update(Request $request, LedgerEntry $ledgerEntry)
+    {
+        $this->requireAdminOrPermission('Update:LedgerEntry');
+
+        if ($ledgerEntry->source !== 'manual') {
+            return $this->error('LEDGER_ENTRY_LOCKED', 'لا يمكن تعديل القيد التلقائي', 409, [
+                'source' => $ledgerEntry->source,
+            ]);
+        }
+
+        $data = $request->validate([
+            'party_type' => ['sometimes', 'string', 'in:user,branch'],
+            'party_id' => ['sometimes', 'uuid'],
+            'date' => ['sometimes', 'date'],
+            'type' => ['sometimes', 'string', 'in:debit,credit'],
+            'amount' => ['sometimes', 'numeric', 'min:0.01'],
+            'description' => ['sometimes', 'string'],
+            'category' => ['nullable', 'string'],
+            'payment_method' => ['nullable', 'string', 'in:cash,bank_transfer,check,other'],
+        ]);
+
+        $partyType = $data['party_type'] ?? $ledgerEntry->party_type;
+        $partyId = $data['party_id'] ?? $ledgerEntry->party_id;
+
+        $this->validatePartyExists($partyType, $partyId);
+
+        $ledgerEntry->forceFill([
+            'party_type' => $partyType,
+            'party_id' => $partyId,
+            'date' => $data['date'] ?? $ledgerEntry->date?->toDateString(),
+            'type' => $data['type'] ?? $ledgerEntry->type,
+            'amount' => array_key_exists('amount', $data) ? $data['amount'] : $ledgerEntry->amount,
+            'description' => $data['description'] ?? $ledgerEntry->description,
+            'category' => array_key_exists('category', $data) ? $data['category'] : $ledgerEntry->category,
+            'payment_method' => array_key_exists('payment_method', $data) ? $data['payment_method'] : $ledgerEntry->payment_method,
+            'updated_by' => $request->user()->id,
+        ])->save();
+
+        $balance = $this->calculateBalance($ledgerEntry->party_type, $ledgerEntry->party_id);
+
+        return $this->success([
+            'id' => $ledgerEntry->id,
+            'date' => $ledgerEntry->date?->toDateString(),
+            'party_type' => $ledgerEntry->party_type,
+            'party_id' => $ledgerEntry->party_id,
+            'type' => $ledgerEntry->type,
+            'amount' => (float) $ledgerEntry->amount,
+            'description' => $ledgerEntry->description,
+            'category' => $ledgerEntry->category,
+            'payment_method' => $ledgerEntry->payment_method,
+            'new_balance' => $balance['balance'],
+            'updated_at' => $ledgerEntry->updated_at?->toIso8601String(),
+        ], 'تم تحديث القيد بنجاح');
+    }
+
+    public function destroy(LedgerEntry $ledgerEntry)
+    {
+        $this->requireAdminOrPermission('Delete:LedgerEntry');
+
+        if ($ledgerEntry->source !== 'manual') {
+            return $this->error('LEDGER_ENTRY_LOCKED', 'لا يمكن حذف القيد التلقائي', 409, [
+                'source' => $ledgerEntry->source,
+            ]);
+        }
+
+        $ledgerEntry->delete();
+
+        return $this->success(null, 'تم حذف القيد بنجاح');
+    }
+
     public function balance(string $party_type, string $party_id)
     {
-        $this->requirePermissionOrSelf('ViewAny:LedgerEntry', $party_id);
+        $this->requireAdminOrPermission('ViewAny:LedgerEntry');
 
-        if (!in_array($party_type, ['user', 'branch', 'supplier', 'customer'], true)) {
+        if (!in_array($party_type, ['user', 'branch'], true)) {
             return $this->error('VALIDATION_ERROR', 'نوع الطرف غير صالح', 422);
         }
 
@@ -220,6 +287,21 @@ class LedgerEntryController extends ApiController
             'entries_count' => (int) ($totals->entries_count ?? 0),
             'last_entry_date' => $totals->last_entry_date,
         ];
+    }
+
+    private function validatePartyExists(string $partyType, string $partyId): void
+    {
+        if ($partyType === 'user' && !User::query()->whereKey($partyId)->exists()) {
+            throw ValidationException::withMessages([
+                'party_id' => ['الموظف غير موجود'],
+            ]);
+        }
+
+        if ($partyType === 'branch' && !Branch::query()->whereKey($partyId)->exists()) {
+            throw ValidationException::withMessages([
+                'party_id' => ['الفرع غير موجود'],
+            ]);
+        }
     }
 
     private function formatBalanceLabel(float $balance): string

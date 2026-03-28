@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\LedgerEntryController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WebhookController;
 use Illuminate\Support\Facades\Route;
@@ -58,6 +59,8 @@ Route::prefix('v1')->group(function () {
 
         Route::get('ledger-entries', [LedgerEntryController::class, 'index']);
         Route::post('ledger-entries', [LedgerEntryController::class, 'store']);
+        Route::put('ledger-entries/{ledgerEntry}', [LedgerEntryController::class, 'update']);
+        Route::delete('ledger-entries/{ledgerEntry}', [LedgerEntryController::class, 'destroy']);
         Route::get('ledger-entries/balance/{party_type}/{party_id}', [LedgerEntryController::class, 'balance']);
 
         Route::get('advance-requests', [AdvanceRequestController::class, 'index']);
@@ -76,6 +79,12 @@ Route::prefix('v1')->group(function () {
         Route::get('notifications', [NotificationController::class, 'index']);
         Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
+
+        Route::get('settings/profile', [SettingsController::class, 'profile']);
+        Route::put('settings/profile', [SettingsController::class, 'updateProfile']);
+        Route::get('settings/preferences', [SettingsController::class, 'preferences']);
+        Route::put('settings/preferences', [SettingsController::class, 'updatePreferences']);
+        Route::put('settings/password', [SettingsController::class, 'updatePassword']);
 
         Route::get('reports/overview', [ReportController::class, 'overview']);
         Route::get('reports/sales', [ReportController::class, 'sales']);
