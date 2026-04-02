@@ -115,7 +115,7 @@ class DailyEntryController extends ApiController
                 'uuid',
                 Rule::exists('users', 'id')->where(fn($query) => $query->whereIn('role', User::employeeRoles())),
             ],
-            'branch_id' => ['required', 'uuid', 'exists:branches,id'],
+            'branch_id' => ['nullable', 'uuid', 'exists:branches,id'],
             'date' => ['required', 'date'],
             'sales' => ['nullable', 'numeric', 'min:0'],
             'cash' => ['nullable', 'numeric', 'min:0'],
@@ -128,8 +128,15 @@ class DailyEntryController extends ApiController
             'payment_type' => ['nullable', 'string', Rule::in(DailyEntry::PAYMENT_TYPES)],
         ]);
 
+        $employee = User::query()->find($data['user_id']);
+        $branchId = $data['branch_id'] ?? $employee?->branch_id;
+
+        if (!$branchId) {
+            return $this->error('VALIDATION_ERROR', 'لا يمكن تحديد الفرع لهذا الموظف', 422);
+        }
+
         $closed = DayClosure::query()
-            ->where('branch_id', $data['branch_id'])
+            ->where('branch_id', $branchId)
             ->whereDate('date', $data['date'])
             ->exists();
 
@@ -152,18 +159,17 @@ class DailyEntryController extends ApiController
             ]);
         }
 
-        $employee = User::query()->find($data['user_id']);
-
-        if ($employee && $employee->branch_id !== $data['branch_id']) {
+        if ($employee && $employee->branch_id !== $branchId) {
             return $this->error('VALIDATION_ERROR', 'الموظف غير تابع لهذا الفرع', 422);
         }
+
         $commissionRate = $data['commission_rate'] ?? $employee?->commission_rate ?? 0;
         $sales = (float) ($data['sales'] ?? 0);
         $commission = round($sales * ((float) $commissionRate) / 100, 2);
 
         $entry = DailyEntry::create([
             'user_id' => $data['user_id'],
-            'branch_id' => $data['branch_id'],
+            'branch_id' => $branchId,
             'date' => $data['date'],
             'sales' => $sales,
             'cash' => (float) ($data['cash'] ?? 0),

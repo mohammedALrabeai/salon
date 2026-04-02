@@ -11,7 +11,7 @@ class DayClosureController extends ApiController
 {
     public function index(Request $request)
     {
-        $this->requirePermission('ViewAny:DayClosure');
+        $this->requireAdminOrPermission('ViewAny:DayClosure');
 
         $query = DayClosure::query()->with(['branch', 'closedBy']);
 
@@ -63,7 +63,7 @@ class DayClosureController extends ApiController
 
     public function store(Request $request)
     {
-        $this->requirePermission('Create:DayClosure');
+        $this->requireAdminOrPermission('Create:DayClosure');
 
         $data = $request->validate([
             'branch_id' => ['required', 'uuid', 'exists:branches,id'],
@@ -158,7 +158,7 @@ class DayClosureController extends ApiController
 
     public function show(DayClosure $dayClosure)
     {
-        $this->requirePermission('View:DayClosure');
+        $this->requireAdminOrPermission('View:DayClosure');
 
         $dayClosure->load(['branch', 'closedBy']);
 
@@ -216,7 +216,7 @@ class DayClosureController extends ApiController
 
     public function pdf(DayClosure $dayClosure)
     {
-        $this->requirePermission('View:DayClosure');
+        $this->requireAdminOrPermission('View:DayClosure');
 
         if (!$dayClosure->pdf_generated_at) {
             $dayClosure->forceFill([

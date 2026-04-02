@@ -14,6 +14,95 @@ use Illuminate\Validation\Rule;
 
 class ReportController extends ApiController
 {
+    public function manager(Request $request)
+    {
+        $this->requireAdminOrPermission('ViewAny:DailyEntry');
+
+        $data = $request->validate([
+            'scope' => ['required', 'string', Rule::in(['overview', 'branch', 'employee'])],
+            'period' => ['nullable', 'string', Rule::in(['today', 'month', 'custom'])],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'branch_id' => ['nullable', 'uuid', 'exists:branches,id'],
+            'employee_id' => [
+                'nullable',
+                'uuid',
+                Rule::exists('users', 'id')->where(fn($query) => $query->whereIn('role', User::employeeRoles())),
+            ],
+        ]);
+
+        $scope = $data['scope'];
+        $period = $data['period'] ?? 'today';
+
+        if ($scope === 'branch' && empty($data['branch_id'])) {
+            return $this->error('VALIDATION_ERROR', 'يرجى اختيار الفرع أولاً', 422);
+        }
+
+        if ($scope === 'employee' && empty($data['employee_id'])) {
+            return $this->error('VALIDATION_ERROR', 'يرجى اختيار الموظف أولاً', 422);
+        }
+
+        $range = $this->resolveOverviewRange($period, $data['date_from'] ?? null, $data['date_to'] ?? null);
+        $branchId = $scope === 'branch' ? ($data['branch_id'] ?? null) : null;
+        $employeeId = $scope === 'employee' ? ($data['employee_id'] ?? null) : null;
+
+        $query = $this->dailyEntriesQuery($range['from'], $range['to'], $branchId, $employeeId);
+        $summary = $this->buildSummary($query);
+        $previousSummary = $this->buildSummary(
+            $this->dailyEntriesQuery(
+                $range['previous_from'],
+                $range['previous_to'],
+                $branchId,
+                $employeeId
+            )
+        );
+
+        $employeesBreakdown = $scope === 'employee'
+            ? []
+            : $this->buildManagerEmployeesBreakdown($query, 12);
+
+        $branchesBreakdown = $scope === 'overview'
+            ? $this->buildManagerBranchesBreakdown($query)
+            : [];
+
+        $bestEntry = (clone $query)->orderByDesc('sales')->first();
+        $worstEntry = (clone $query)->orderBy('sales')->first();
+
+        return $this->success([
+            'filters' => [
+                'scope' => $scope,
+                'period' => $period,
+                'date_from' => $range['from'],
+                'date_to' => $range['to'],
+                'previous_from' => $range['previous_from'],
+                'previous_to' => $range['previous_to'],
+                'group_by' => $range['group_by'],
+                'branch_id' => $branchId,
+                'employee_id' => $employeeId,
+            ],
+            'scope' => $this->resolveManagerScope($scope, $branchId, $employeeId),
+            'summary' => [
+                ...$summary,
+                'total_earnings' => round($summary['total_commission'] + $summary['total_bonus'], 2),
+            ],
+            'comparison' => $this->buildComparisonPayload($summary, $previousSummary),
+            'chart_data' => $this->salesChartData($query, $range['group_by']),
+            'highlights' => [
+                'top_employee' => $scope === 'employee'
+                    ? null
+                    : collect($employeesBreakdown)->first(),
+                'top_branch' => $scope === 'overview'
+                    ? collect($branchesBreakdown)->first()
+                    : null,
+                'best_day' => $bestEntry ? $this->formatBestOrWorstEntry($bestEntry) : null,
+                'worst_day' => $worstEntry ? $this->formatBestOrWorstEntry($worstEntry) : null,
+            ],
+            'branches_breakdown' => $branchesBreakdown,
+            'employees_breakdown' => $employeesBreakdown,
+            'entries' => $this->buildManagerEntries($query, 30),
+        ]);
+    }
+
     public function overview(Request $request)
     {
         $this->requireAdminOrPermission('ViewAny:DailyEntry');
@@ -336,6 +425,44 @@ class ReportController extends ApiController
         ];
     }
 
+    private function resolveManagerScope(string $scope, ?string $branchId, ?string $employeeId): array
+    {
+        if ($scope === 'branch') {
+            $branch = $branchId ? Branch::query()->find($branchId) : null;
+
+            return [
+                'type' => 'branch',
+                'id' => $branch?->id,
+                'name' => $branch?->name ?? 'فرع',
+                'title' => $branch ? "تقرير {$branch->name}" : 'تقرير الفرع',
+                'subtitle' => 'يعرض الأداء الكامل لهذا الفرع فقط خلال الفترة المحددة',
+            ];
+        }
+
+        if ($scope === 'employee') {
+            $employee = $employeeId
+                ? User::query()->with('branch')->find($employeeId)
+                : null;
+
+            return [
+                'type' => 'employee',
+                'id' => $employee?->id,
+                'name' => $employee?->name ?? 'موظف',
+                'branch_name' => $employee?->branch?->name,
+                'title' => $employee ? "تقرير {$employee->name}" : 'تقرير الموظف',
+                'subtitle' => 'يعرض أداء الموظف المحدد فقط مع آخر العمليات المسجلة له',
+            ];
+        }
+
+        return [
+            'type' => 'overview',
+            'id' => null,
+            'name' => 'كل الفروع',
+            'title' => 'التقرير العام',
+            'subtitle' => 'يعرض ملخص جميع الفروع والموظفين خلال الفترة المحددة',
+        ];
+    }
+
     private function buildEmployeeReport(
         string $employeeId,
         string $from,
@@ -512,6 +639,163 @@ class ReportController extends ApiController
                 'entries' => (int) $row->entries_count,
             ];
         })->values()->all();
+    }
+
+    private function buildManagerEmployeesBreakdown(Builder $query, int $limit = 12): array
+    {
+        $rows = (clone $query)
+            ->select(
+                'user_id',
+                DB::raw('COALESCE(SUM(sales), 0) as total_sales'),
+                DB::raw('COALESCE(SUM(net), 0) as total_net'),
+                DB::raw('COALESCE(SUM(commission), 0) as total_commission'),
+                DB::raw('COALESCE(SUM(bonus), 0) as total_bonus'),
+                DB::raw('COUNT(*) as entries_count')
+            )
+            ->groupBy('user_id')
+            ->orderByDesc('total_sales')
+            ->limit($limit)
+            ->get();
+
+        $users = User::query()
+            ->with('branch')
+            ->whereIn('id', $rows->pluck('user_id')->all())
+            ->get()
+            ->keyBy('id');
+
+        return $rows->map(function ($row) use ($users) {
+            $user = $users->get($row->user_id);
+            $bonus = (float) $row->total_bonus;
+            $commission = (float) $row->total_commission;
+
+            return [
+                'user_id' => $row->user_id,
+                'name' => $user?->name,
+                'branch_name' => $user?->branch?->name,
+                'sales' => (float) $row->total_sales,
+                'net' => (float) $row->total_net,
+                'commission' => $commission,
+                'bonus' => $bonus,
+                'total_earnings' => round($commission + $bonus, 2),
+                'entries' => (int) $row->entries_count,
+            ];
+        })->values()->all();
+    }
+
+    private function buildManagerBranchesBreakdown(Builder $query): array
+    {
+        $rows = (clone $query)
+            ->select(
+                'branch_id',
+                DB::raw('COALESCE(SUM(sales), 0) as total_sales'),
+                DB::raw('COALESCE(SUM(net), 0) as total_net'),
+                DB::raw('COUNT(*) as entries_count'),
+                DB::raw('COUNT(DISTINCT user_id) as employees_count')
+            )
+            ->groupBy('branch_id')
+            ->orderByDesc('total_sales')
+            ->get();
+
+        $branches = Branch::query()
+            ->whereIn('id', $rows->pluck('branch_id')->all())
+            ->get()
+            ->keyBy('id');
+
+        $totalSales = (float) $rows->sum('total_sales');
+
+        return $rows->map(function ($row) use ($branches, $totalSales) {
+            $branch = $branches->get($row->branch_id);
+            $sales = (float) $row->total_sales;
+
+            return [
+                'branch_id' => $row->branch_id,
+                'name' => $branch?->name,
+                'sales' => $sales,
+                'net' => (float) $row->total_net,
+                'entries' => (int) $row->entries_count,
+                'employees_count' => (int) $row->employees_count,
+                'percentage' => $totalSales > 0 ? round(($sales / $totalSales) * 100, 2) : 0.0,
+            ];
+        })->values()->all();
+    }
+
+    private function buildManagerEntries(Builder $query, int $limit = 30): array
+    {
+        return (clone $query)
+            ->with(['user', 'branch'])
+            ->orderByDesc('date')
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn(DailyEntry $entry) => $this->serializeManagerEntry($entry))
+            ->values()
+            ->all();
+    }
+
+    private function serializeManagerEntry(DailyEntry $entry): array
+    {
+        return [
+            'id' => $entry->id,
+            'date' => $entry->date?->toDateString(),
+            'user' => $entry->user ? [
+                'id' => $entry->user->id,
+                'name' => $entry->user->name,
+            ] : null,
+            'branch' => $entry->branch ? [
+                'id' => $entry->branch->id,
+                'name' => $entry->branch->name,
+            ] : null,
+            'sales' => (float) $entry->sales,
+            'cash' => (float) $entry->cash,
+            'expense' => (float) $entry->expense,
+            'net' => (float) $entry->net,
+            'commission' => (float) $entry->commission,
+            'bonus' => (float) $entry->bonus,
+            'payment_type' => $entry->payment_type ?? DailyEntry::PAYMENT_TYPE_CASH,
+            'transactions_count' => (int) $entry->transactions_count,
+            'note' => $entry->note,
+            'is_locked' => (bool) $entry->is_locked,
+        ];
+    }
+
+    private function buildComparisonPayload(array $summary, array $previousSummary): array
+    {
+        $currentEarnings = (float) $summary['total_commission'] + (float) $summary['total_bonus'];
+        $previousEarnings = (float) $previousSummary['total_commission'] + (float) $previousSummary['total_bonus'];
+
+        return [
+            'previous_summary' => [
+                'total_sales' => (float) $previousSummary['total_sales'],
+                'total_net' => (float) $previousSummary['total_net'],
+                'entries_count' => (int) $previousSummary['entries_count'],
+                'total_earnings' => round($previousEarnings, 2),
+            ],
+            'sales_change' => $this->percentageChange(
+                (float) $summary['total_sales'],
+                (float) $previousSummary['total_sales']
+            ),
+            'net_change' => $this->percentageChange(
+                (float) $summary['total_net'],
+                (float) $previousSummary['total_net']
+            ),
+            'entries_change' => $this->percentageChange(
+                (float) $summary['entries_count'],
+                (float) $previousSummary['entries_count']
+            ),
+            'earnings_change' => $this->percentageChange(
+                $currentEarnings,
+                $previousEarnings
+            ),
+        ];
+    }
+
+    private function percentageChange(float $current, float $previous): float
+    {
+        if ($previous == 0.0) {
+            return $current > 0 ? 100.0 : 0.0;
+        }
+
+        return round((($current - $previous) / $previous) * 100, 2);
     }
 
     private function buildBranchesBreakdown(Builder $query, float $totalSales): array

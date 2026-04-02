@@ -9,7 +9,7 @@ class NotificationController extends ApiController
 {
     public function index(Request $request)
     {
-        $this->requirePermission('ViewAny:Notification');
+        $this->requireAdminOrPermission('ViewAny:Notification');
 
         $user = $request->user();
 
@@ -72,7 +72,7 @@ class NotificationController extends ApiController
 
     public function markRead(Notification $notification)
     {
-        $this->requirePermission('Update:Notification');
+        $this->requireAdminOrPermission('Update:Notification');
 
         if (! $this->appliesToUser($notification, request()->user())) {
             return $this->error('RESOURCE_NOT_FOUND', 'المورد غير موجود', 404);
@@ -92,7 +92,7 @@ class NotificationController extends ApiController
 
     public function markAllRead(Request $request)
     {
-        $this->requirePermission('Update:Notification');
+        $this->requireAdminOrPermission('Update:Notification');
 
         $user = $request->user();
 

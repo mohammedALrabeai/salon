@@ -86,6 +86,7 @@ Route::prefix('v1')->group(function () {
         Route::put('settings/preferences', [SettingsController::class, 'updatePreferences']);
         Route::put('settings/password', [SettingsController::class, 'updatePassword']);
 
+        Route::get('reports/manager', [ReportController::class, 'manager']);
         Route::get('reports/overview', [ReportController::class, 'overview']);
         Route::get('reports/sales', [ReportController::class, 'sales']);
         Route::get('reports/users', [ReportController::class, 'users']);
