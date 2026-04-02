@@ -80,8 +80,12 @@ class DashboardController extends ApiController
 
     private function summarizeRange(Carbon $from, Carbon $to): array
     {
-        $totals = DailyEntry::query()
-            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+        $totals = $this->applyDateRange(
+            DailyEntry::query(),
+            'date',
+            $from->toDateString(),
+            $to->toDateString()
+        )
             ->selectRaw('COALESCE(SUM(sales), 0) as total_sales')
             ->selectRaw('COALESCE(SUM(net), 0) as total_net')
             ->selectRaw('COUNT(*) as entries_count')
@@ -121,8 +125,12 @@ class DashboardController extends ApiController
 
     private function topEmployees(Carbon $from, Carbon $to): array
     {
-        $rows = DailyEntry::query()
-            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+        $rows = $this->applyDateRange(
+            DailyEntry::query(),
+            'date',
+            $from->toDateString(),
+            $to->toDateString()
+        )
             ->select('user_id')
             ->selectRaw('COALESCE(SUM(sales), 0) as total_sales')
             ->selectRaw('COALESCE(SUM(commission), 0) as total_commission')
@@ -161,8 +169,12 @@ class DashboardController extends ApiController
             default => "DATE_FORMAT(date, '%Y-%m-%d')",
         };
 
-        $rows = DailyEntry::query()
-            ->whereBetween('date', [$start->toDateString(), $today->toDateString()])
+        $rows = $this->applyDateRange(
+            DailyEntry::query(),
+            'date',
+            $start->toDateString(),
+            $today->toDateString()
+        )
             ->selectRaw("{$dateExpression} as bucket")
             ->selectRaw('COALESCE(SUM(sales), 0) as total_sales')
             ->groupBy('bucket')
@@ -197,8 +209,12 @@ class DashboardController extends ApiController
     {
         $palette = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#14b8a6'];
 
-        $rows = DailyEntry::query()
-            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+        $rows = $this->applyDateRange(
+            DailyEntry::query(),
+            'date',
+            $from->toDateString(),
+            $to->toDateString()
+        )
             ->select('branch_id')
             ->selectRaw('COALESCE(SUM(sales), 0) as total_sales')
             ->groupBy('branch_id')

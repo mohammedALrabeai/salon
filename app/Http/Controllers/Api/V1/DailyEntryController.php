@@ -365,9 +365,12 @@ class DailyEntryController extends ApiController
         $dateFrom = $data['date_from'] ?? now()->startOfMonth()->toDateString();
         $dateTo = $data['date_to'] ?? now()->toDateString();
 
-        $entries = DailyEntry::query()
-            ->where('user_id', $user->id)
-            ->whereBetween('date', [$dateFrom, $dateTo])
+        $entries = $this->applyDateRange(
+            DailyEntry::query()->where('user_id', $user->id),
+            'date',
+            $dateFrom,
+            $dateTo
+        )
             ->orderBy('date')
             ->get();
 

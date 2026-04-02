@@ -33,9 +33,12 @@ class BarberController extends ApiController
             ->first();
 
         // 2. This month's stats
-        $monthStats = DailyEntry::query()
-            ->where('user_id', $user->id)
-            ->whereBetween('date', [$monthStart, $today])
+        $monthStats = $this->applyDateRange(
+            DailyEntry::query()->where('user_id', $user->id),
+            'date',
+            $monthStart,
+            $today
+        )
             ->selectRaw('COALESCE(SUM(sales), 0) as sales')
             ->selectRaw('COALESCE(SUM(commission), 0) as commission')
             ->selectRaw('COALESCE(SUM(bonus), 0) as bonus')
@@ -253,9 +256,12 @@ class BarberController extends ApiController
 
         // Helper function to get period stats
         $getStats = function (string $dateFrom, string $dateTo) use ($user) {
-            $entries = DailyEntry::query()
-                ->where('user_id', $user->id)
-                ->whereBetween('date', [$dateFrom, $dateTo])
+            $entries = $this->applyDateRange(
+                DailyEntry::query()->where('user_id', $user->id),
+                'date',
+                $dateFrom,
+                $dateTo
+            )
                 ->orderBy('date')
                 ->get();
 
@@ -312,9 +318,12 @@ class BarberController extends ApiController
 
         // Weekly chart data (last 7 days)
         $weekAgo = $today->copy()->subDays(6)->toDateString();
-        $weekEntries = DailyEntry::query()
-            ->where('user_id', $user->id)
-            ->whereBetween('date', [$weekAgo, $todayStr])
+        $weekEntries = $this->applyDateRange(
+            DailyEntry::query()->where('user_id', $user->id),
+            'date',
+            $weekAgo,
+            $todayStr
+        )
             ->get()
             ->groupBy(fn($e) => $e->date->toDateString());
 

@@ -159,4 +159,11 @@ abstract class ApiController extends Controller
 
         return min($perPage, 100);
     }
+
+    protected function applyDateRange($query, string $column, string $from, string $to)
+    {
+        return $query
+            ->whereDate($column, '>=', $from)
+            ->whereDate($column, '<=', $to);
+    }
 }

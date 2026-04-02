@@ -41,10 +41,14 @@ class BranchController extends ApiController
             ->groupBy('branch_id')
             ->pluck('total_sales', 'branch_id');
 
-        $monthSales = DailyEntry::query()
-            ->select('branch_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'))
-            ->whereIn('branch_id', $branchIds)
-            ->whereBetween('date', [$monthStart, $today])
+        $monthSales = $this->applyDateRange(
+            DailyEntry::query()
+                ->select('branch_id', DB::raw('COALESCE(SUM(sales), 0) as total_sales'))
+                ->whereIn('branch_id', $branchIds),
+            'date',
+            $monthStart,
+            $today
+        )
             ->groupBy('branch_id')
             ->pluck('total_sales', 'branch_id');
 
@@ -122,9 +126,12 @@ class BranchController extends ApiController
             ->whereDate('date', $today)
             ->sum('sales');
 
-        $monthSales = DailyEntry::query()
-            ->where('branch_id', $branch->id)
-            ->whereBetween('date', [$monthStart, $today])
+        $monthSales = $this->applyDateRange(
+            DailyEntry::query()->where('branch_id', $branch->id),
+            'date',
+            $monthStart,
+            $today
+        )
             ->sum('sales');
 
         return $this->success(
@@ -157,9 +164,12 @@ class BranchController extends ApiController
             ->selectRaw('COALESCE(SUM(sales), 0) as total_sales, COUNT(*) as entries_count')
             ->first();
 
-        $monthStats = DailyEntry::query()
-            ->where('branch_id', $branch->id)
-            ->whereBetween('date', [$monthStart, $today])
+        $monthStats = $this->applyDateRange(
+            DailyEntry::query()->where('branch_id', $branch->id),
+            'date',
+            $monthStart,
+            $today
+        )
             ->selectRaw('COALESCE(SUM(sales), 0) as total_sales, COUNT(*) as entries_count')
             ->first();
 

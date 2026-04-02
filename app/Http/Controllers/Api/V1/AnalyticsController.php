@@ -21,8 +21,8 @@ class AnalyticsController extends ApiController
         $period = $data['period'] ?? 'today';
         [$from, $to, $prevFrom, $prevTo] = $this->resolvePeriod($period);
 
-        $query = DailyEntry::query()->whereBetween('date', [$from, $to]);
-        $prevQuery = DailyEntry::query()->whereBetween('date', [$prevFrom, $prevTo]);
+        $query = $this->applyDateRange(DailyEntry::query(), 'date', $from, $to);
+        $prevQuery = $this->applyDateRange(DailyEntry::query(), 'date', $prevFrom, $prevTo);
 
         if (!empty($data['branch_id'])) {
             $query->where('branch_id', $data['branch_id']);
@@ -95,8 +95,12 @@ class AnalyticsController extends ApiController
             'period2_to' => ['required', 'date', 'after_or_equal:period2_from'],
         ]);
 
-        $period1 = $this->aggregateKpis(DailyEntry::query()->whereBetween('date', [$data['period1_from'], $data['period1_to']]));
-        $period2 = $this->aggregateKpis(DailyEntry::query()->whereBetween('date', [$data['period2_from'], $data['period2_to']]));
+        $period1 = $this->aggregateKpis(
+            $this->applyDateRange(DailyEntry::query(), 'date', $data['period1_from'], $data['period1_to'])
+        );
+        $period2 = $this->aggregateKpis(
+            $this->applyDateRange(DailyEntry::query(), 'date', $data['period2_from'], $data['period2_to'])
+        );
 
         $comparison = [
             'sales_change' => $this->percentageChange($period1['sales'], $period2['sales']),

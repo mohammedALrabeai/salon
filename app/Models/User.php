@@ -135,7 +135,7 @@ class User extends Authenticatable
      */
     public static function employeeRoles(): array
     {
-        return ['barber', 'manager', 'receptionist', 'other'];
+        return ['barber', 'receptionist', 'other'];
     }
 
     public function getAuthPassword(): string

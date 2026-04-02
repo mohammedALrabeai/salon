@@ -267,8 +267,7 @@ class ReportController extends ApiController
 
         [$from, $to] = $this->resolveDateRange($data['date_from'] ?? null, $data['date_to'] ?? null);
 
-        $rows = DailyEntry::query()
-            ->whereBetween('date', [$from, $to])
+        $rows = $this->applyDateRange(DailyEntry::query(), 'date', $from, $to)
             ->select(
                 'branch_id',
                 DB::raw('COALESCE(SUM(sales), 0) as total_sales'),
@@ -327,9 +326,12 @@ class ReportController extends ApiController
 
         [$from, $to] = $this->resolveDateRange($data['date_from'] ?? null, $data['date_to'] ?? null);
 
-        $query = LedgerEntry::query()
-            ->where('party_type', $data['party_type'])
-            ->whereBetween('date', [$from, $to]);
+        $query = $this->applyDateRange(
+            LedgerEntry::query()->where('party_type', $data['party_type']),
+            'date',
+            $from,
+            $to
+        );
 
         $rows = $query
             ->select(
@@ -830,7 +832,7 @@ class ReportController extends ApiController
         ?string $branchId = null,
         ?string $userId = null
     ): Builder {
-        $query = DailyEntry::query()->whereBetween('date', [$from, $to]);
+        $query = $this->applyDateRange(DailyEntry::query(), 'date', $from, $to);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -963,8 +965,7 @@ class ReportController extends ApiController
             return [];
         }
 
-        $rows = DailyEntry::query()
-            ->whereBetween('date', [$from, $to])
+        $rows = $this->applyDateRange(DailyEntry::query(), 'date', $from, $to)
             ->whereIn('user_id', $userIds)
             ->select('user_id', 'date', DB::raw('COALESCE(SUM(sales), 0) as total_sales'))
             ->groupBy('user_id', 'date')
