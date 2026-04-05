@@ -6,14 +6,85 @@ use App\Models\Branch;
 use App\Models\DailyEntry;
 use App\Models\LedgerEntry;
 use App\Models\User;
+use App\Support\SimpleExcelExporter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ReportController extends ApiController
 {
+    public function exportEmployeeReport(Request $request, SimpleExcelExporter $excelExporter)
+    {
+        $this->requireAdminOrPermission('ViewAny:DailyEntry');
+
+        $data = $request->validate([
+            'employee_id' => [
+                'required',
+                'uuid',
+                Rule::exists('users', 'id')->where(fn($query) => $query->whereIn('role', User::employeeRoles())),
+            ],
+            'period' => ['nullable', 'string', Rule::in(['today', 'week', 'month', 'quarter', 'year', 'custom'])],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'branch_id' => ['nullable', 'uuid', 'exists:branches,id'],
+        ]);
+
+        $period = $data['period'] ?? 'month';
+        $range = $this->resolveOverviewRange($period, $data['date_from'] ?? null, $data['date_to'] ?? null);
+        $branchId = $data['branch_id'] ?? null;
+        $employeeId = $data['employee_id'];
+        $employee = User::query()->with('branch')->find($employeeId);
+
+        if (!$employee) {
+            return $this->error('RESOURCE_NOT_FOUND', 'الموظف غير موجود', 404);
+        }
+
+        $employeeReport = $this->buildEmployeeReport(
+            $employeeId,
+            $range['from'],
+            $range['to'],
+            $range['group_by'],
+            $branchId
+        );
+
+        if (!$employeeReport) {
+            return $this->error('RESOURCE_NOT_FOUND', 'تعذر إنشاء تقرير الموظف', 404);
+        }
+
+        $entries = $this->dailyEntriesQuery($range['from'], $range['to'], $branchId, $employeeId)
+            ->with('branch')
+            ->orderBy('date')
+            ->orderBy('created_at')
+            ->get();
+
+        $dailyBreakdown = $this->buildEmployeeDailyBreakdownRows($entries);
+        $filePath = $excelExporter->store([
+            [
+                'name' => 'الملخص',
+                'rows' => $this->buildEmployeeSummarySheetRows($employee, $employeeReport, $period),
+            ],
+            [
+                'name' => 'الملخص اليومي',
+                'rows' => $dailyBreakdown,
+            ],
+            [
+                'name' => 'العمليات',
+                'rows' => $this->buildEmployeeOperationsSheetRows($entries),
+            ],
+        ]);
+
+        $slug = trim(Str::slug($employee->name, '-'));
+        $baseName = $slug !== '' ? $slug : 'employee-report';
+        $fileName = $baseName . '-' . $range['from'] . '-to-' . $range['to'] . '.xlsx';
+
+        return response()
+            ->download($filePath, $fileName, ['Content-Type' => SimpleExcelExporter::CONTENT_TYPE])
+            ->deleteFileAfterSend(true);
+    }
+
     public function manager(Request $request)
     {
         $this->requireAdminOrPermission('ViewAny:DailyEntry');
@@ -531,6 +602,152 @@ class ReportController extends ApiController
         ];
     }
 
+    private function buildEmployeeSummarySheetRows(User $employee, array $employeeReport, string $period): array
+    {
+        $periodSummary = $employeeReport['period_summary'];
+        $paymentBreakdown = $periodSummary['payment_type_breakdown'] ?? [];
+        $bestDayLabel = $employeeReport['best_day']
+            ? ($employeeReport['best_day']['date'] . ' - ' . number_format((float) $employeeReport['best_day']['sales'], 2) . ' ر.س')
+            : '-';
+        $worstDayLabel = $employeeReport['worst_day']
+            ? ($employeeReport['worst_day']['date'] . ' - ' . number_format((float) $employeeReport['worst_day']['sales'], 2) . ' ر.س')
+            : '-';
+
+        return [
+            ['القسم', 'البند', 'القيمة'],
+            ['الموظف', 'الاسم', $employee->name],
+            ['الموظف', 'الدور', $this->roleLabel($employee->role)],
+            ['الموظف', 'الفرع', $employee->branch?->name ?? '-'],
+            ['الموظف', 'نسبة العمولة', $employee->commission_rate !== null ? (float) $employee->commission_rate . '%' : '-'],
+            ['الفترة', 'نوع التقرير', $this->periodLabel($period)],
+            ['الفترة', 'من', $employeeReport['period']['from']],
+            ['الفترة', 'إلى', $employeeReport['period']['to']],
+            ['الفترة', 'عدد الأيام', (int) $employeeReport['period']['days']],
+            ['ملخص الفترة', 'إجمالي المبيعات', (float) $periodSummary['sales']],
+            ['ملخص الفترة', 'المبلغ المحصل', (float) $periodSummary['cash']],
+            ['ملخص الفترة', 'المصاريف', (float) $periodSummary['expense']],
+            ['ملخص الفترة', 'الصافي', (float) $periodSummary['net']],
+            ['ملخص الفترة', 'العمولة', (float) $periodSummary['commission']],
+            ['ملخص الفترة', 'البونص', (float) $periodSummary['bonus']],
+            ['ملخص الفترة', 'إجمالي المستحق', (float) $periodSummary['total_earnings']],
+            ['ملخص الفترة', 'عدد العمليات', (int) $periodSummary['entries']],
+            ['المتوسطات', 'متوسط المبيعات لليوم العامل', (float) $employeeReport['averages']['daily_sales']],
+            ['المتوسطات', 'متوسط العمولة لليوم العامل', (float) $employeeReport['averages']['daily_commission']],
+            ['المتوسطات', 'متوسط البونص لليوم العامل', (float) $employeeReport['averages']['daily_bonus']],
+            ['الأداء', 'الأيام العاملة', (int) $employeeReport['working_days']],
+            ['الأداء', 'الأيام بدون عمليات', (int) $employeeReport['zero_days']],
+            ['الأداء', 'أفضل يوم', $bestDayLabel],
+            ['الأداء', 'أضعف يوم', $worstDayLabel],
+            ['طرق الدفع', 'كاش', (float) ($paymentBreakdown['cash'] ?? 0)],
+            ['طرق الدفع', 'شبكة', (float) ($paymentBreakdown['network'] ?? 0)],
+            ['طرق الدفع', 'مشتريات', (float) ($paymentBreakdown['purchases'] ?? 0)],
+        ];
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, DailyEntry>  $entries
+     * @return array<int, array<int, mixed>>
+     */
+    private function buildEmployeeDailyBreakdownRows($entries): array
+    {
+        $rows = [[
+            'التاريخ',
+            'المبيعات',
+            'المبلغ المحصل',
+            'المصاريف',
+            'الصافي',
+            'العمولة',
+            'البونص',
+            'إجمالي المستحق',
+            'عدد السجلات',
+            'مبيعات الكاش',
+            'مبيعات الشبكة',
+            'مبيعات المشتريات',
+        ]];
+
+        foreach ($entries->groupBy(fn(DailyEntry $entry) => $entry->date?->toDateString()) as $date => $dayEntries) {
+            $rows[] = [
+                $date,
+                (float) $dayEntries->sum('sales'),
+                (float) $dayEntries->sum('cash'),
+                (float) $dayEntries->sum('expense'),
+                (float) $dayEntries->sum('net'),
+                (float) $dayEntries->sum('commission'),
+                (float) $dayEntries->sum('bonus'),
+                (float) ($dayEntries->sum('commission') + $dayEntries->sum('bonus')),
+                (int) $dayEntries->count(),
+                (float) $dayEntries->where('payment_type', DailyEntry::PAYMENT_TYPE_CASH)->sum('sales'),
+                (float) $dayEntries->where('payment_type', DailyEntry::PAYMENT_TYPE_NETWORK)->sum('sales'),
+                (float) $dayEntries->where('payment_type', DailyEntry::PAYMENT_TYPE_PURCHASES)->sum('sales'),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, DailyEntry>  $entries
+     * @return array<int, array<int, mixed>>
+     */
+    private function buildEmployeeOperationsSheetRows($entries): array
+    {
+        $rows = [[
+            'التاريخ',
+            'الفرع',
+            'المبيعات',
+            'المبلغ المحصل',
+            'المصاريف',
+            'الصافي',
+            'العمولة',
+            'البونص',
+            'إجمالي المستحق',
+            'طريقة الدفع',
+            'عدد العمليات',
+            'ملاحظات',
+            'المصدر',
+            'تاريخ الإنشاء',
+        ]];
+
+        foreach ($entries as $entry) {
+            $rows[] = [
+                $entry->date?->toDateString(),
+                $entry->branch?->name ?? '-',
+                (float) $entry->sales,
+                (float) $entry->cash,
+                (float) $entry->expense,
+                (float) $entry->net,
+                (float) $entry->commission,
+                (float) $entry->bonus,
+                (float) ($entry->commission + $entry->bonus),
+                $this->paymentTypeLabel($entry->payment_type ?? DailyEntry::PAYMENT_TYPE_CASH),
+                (int) $entry->transactions_count,
+                $entry->note ?? '',
+                $entry->source ?? '',
+                $entry->created_at?->format('Y-m-d H:i:s'),
+            ];
+        }
+
+        $rows[] = [];
+        $rows[] = [
+            'الإجمالي',
+            '',
+            (float) $entries->sum('sales'),
+            (float) $entries->sum('cash'),
+            (float) $entries->sum('expense'),
+            (float) $entries->sum('net'),
+            (float) $entries->sum('commission'),
+            (float) $entries->sum('bonus'),
+            (float) ($entries->sum('commission') + $entries->sum('bonus')),
+            '',
+            (int) $entries->sum('transactions_count'),
+            '',
+            '',
+            '',
+        ];
+
+        return $rows;
+    }
+
     private function formatEmployeeSummary(array $summary): array
     {
         return [
@@ -554,6 +771,39 @@ class ReportController extends ApiController
             'net' => (float) $entry->net,
             'commission' => (float) $entry->commission,
         ];
+    }
+
+    private function paymentTypeLabel(string $paymentType): string
+    {
+        return match ($paymentType) {
+            DailyEntry::PAYMENT_TYPE_NETWORK => 'شبكة',
+            DailyEntry::PAYMENT_TYPE_PURCHASES => 'مشتريات',
+            default => 'كاش',
+        };
+    }
+
+    private function periodLabel(string $period): string
+    {
+        return match ($period) {
+            'today' => 'اليوم',
+            'week' => 'هذا الأسبوع',
+            'month' => 'هذا الشهر',
+            'quarter' => 'هذا الربع',
+            'year' => 'هذه السنة',
+            default => 'فترة مخصصة',
+        };
+    }
+
+    private function roleLabel(?string $role): string
+    {
+        return match ($role) {
+            'barber' => 'حلاق',
+            'receptionist' => 'موظف استقبال',
+            'manager' => 'مدير عام',
+            'owner' => 'مالك',
+            'super_admin' => 'مدير النظام',
+            default => $role ?? '-',
+        };
     }
 
     private function serializeEntry(DailyEntry $entry): array

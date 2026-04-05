@@ -6,6 +6,7 @@ use App\Http\Middleware\ApiTokenAuth;
 use App\Models\Branch;
 use App\Models\DailyEntry;
 use App\Models\User;
+use App\Support\SimpleExcelExporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -85,5 +86,54 @@ class ManagerReportsTest extends TestCase
             ->assertJsonPath('data.summary.total_sales', 320)
             ->assertJsonPath('data.summary.entries_count', 1)
             ->assertJsonPath('data.employees_breakdown.0.user_id', $employee->id);
+    }
+
+    public function test_employee_report_can_be_exported_as_excel(): void
+    {
+        $manager = User::factory()->create([
+            'role' => 'manager',
+            'status' => 'active',
+        ]);
+
+        $branch = Branch::query()->create([
+            'name' => 'Main Branch',
+            'code' => 'BR-001',
+            'status' => 'active',
+            'created_by' => $manager->id,
+            'updated_by' => $manager->id,
+        ]);
+
+        $employee = User::factory()->create([
+            'role' => 'barber',
+            'status' => 'active',
+            'branch_id' => $branch->id,
+            'commission_rate' => 45,
+        ]);
+
+        DailyEntry::query()->create([
+            'branch_id' => $branch->id,
+            'user_id' => $employee->id,
+            'date' => now()->toDateString(),
+            'sales' => 500,
+            'cash' => 50,
+            'expense' => 10,
+            'payment_type' => 'network',
+            'commission' => 225,
+            'commission_rate' => 45,
+            'bonus' => 20,
+            'transactions_count' => 4,
+            'source' => 'api',
+            'created_by' => $manager->id,
+            'updated_by' => $manager->id,
+        ]);
+
+        $this->withoutMiddleware(ApiTokenAuth::class);
+        $this->actingAs($manager);
+
+        $response = $this->get('/api/v1/reports/employee-export?employee_id=' . $employee->id . '&period=today');
+
+        $response->assertOk();
+        $response->assertHeader('content-type', SimpleExcelExporter::CONTENT_TYPE);
+        $this->assertStringContainsString('.xlsx', (string) $response->headers->get('content-disposition'));
     }
 }
